@@ -150,7 +150,7 @@ var newsPage = (function() {
 
     // ---- DISPLAY MESSAGE IN DEVELOPER MODE ----
     if (DEFAULTS.developerMode) {
-        console.log("Developer mode is ON, turn off before implementing in Humany");
+        console.log("Developer mode is ON, turn off before implementing this code in production");
     }
 
     return {
@@ -158,7 +158,6 @@ var newsPage = (function() {
          * INITIATER - THE START OF THE SCRIPT
          */
         initiate: function() {
-            console.log("FUNCTION LOG: initate() invoked");
             var modalImgs, imgCount, tableNodeList, overAllPageWrapper, deleteIcon,
                 tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, tableNodeListLenght;
 
@@ -203,8 +202,6 @@ var newsPage = (function() {
                 let dataObject = allNewsContent[i];
                 this.createHTMLBlock(dataObject);
             }
-
-            console.log("FUNCTION LOG: initiate() is done");
         },
 
         /**
@@ -212,7 +209,6 @@ var newsPage = (function() {
          * Includes a call to initiate() when done
          */
         fetchNotificationTables: function() {
-            console.log("FUNCTION LOG: fetchNotificationTables() invoked");
             var modalImgs, imgCount, tableNodeList = [], tableNodeListLenght, overAllPageWrapper,
                 tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, dateString;
 
@@ -262,7 +258,6 @@ var newsPage = (function() {
             if (tableNodeListLenght === 0) {
                 if (retryAttempt < DEFAULTS.timesToRetryFetchingTableData) {
                     setTimeout(function() {
-                        console.log("FUNCTION LOG: fetchnotificationTables attempt: ", retryAttempt);
                         newsPage.fetchNotificationTables();
                     }, 1000);
                     retryAttempt++;
@@ -272,7 +267,7 @@ var newsPage = (function() {
                 // Get the target block by ID to place latest news inside
                 newsSectionWrapper = document.querySelector(`#${DEFAULTS.latestNewsWrapperID}`);
                 newsSectionWrapper.style.display = "block";
-                console.log("EVENT: Toggled on news block in panel");
+                
                 // Place it inside the elements object for later reference
                 elements.latestNewsBlock = newsSectionWrapper;
             }
@@ -697,8 +692,6 @@ var newsPage = (function() {
                 allNewsContent.push(newsData);
                 filteredTableData.push(newsData);
             }
-            console.log("FETCHED DATA IN TABLE: all news content", allNewsContent);
-            console.log("FETCHED DATA IN TABLE: filteredTableData", filteredTableData);
         },
 
         /**
