@@ -225,7 +225,7 @@ var newsPage = (function() {
             } else {
                 DEFAULTS.guideIDSToFetch.forEach(guideID => {
                     let fetchedJSON, bodyOfGuide, htmlContainer, table;
-                    var requestURL = `https://telia-dk.humany.net/${DEFAULT.humanyInterfaceName}/guides/${guideID}?language=da&credentials=true`;
+                    var requestURL = `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/guides/${guideID}?language=da&credentials=true`;
                     let request = new XMLHttpRequest();
                     request.onreadystatechange = function () {
                         if (this.readyState == 4 && this.status == 200) {
