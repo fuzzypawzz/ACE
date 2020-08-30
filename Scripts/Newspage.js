@@ -4,7 +4,7 @@ var newsPage = (function() {
     // ---------------------- TO DO's ----------------------
     // If link in tabel does not contain http or https in front, then insert it (make it a href if its not)
     // The img modal in the html, shall either be there and reused when modal is clicked, or new modal shall be created every time
-    // "https://telia-dk.humany.net/test-miljo/"; change this in the code to be a default (allbrands) or parse after last things in url, to make it work for all tjekit's
+    // "https://telia-dk.humany.net/xxxxxxxxx/"; change this in the code to be a default (allbrands) or parse after last things in url, to make it work for all tjekit's
 
     // Trimmed data from the tables
     var allNewsContent = [];
@@ -225,7 +225,7 @@ var newsPage = (function() {
             } else {
                 DEFAULTS.guideIDSToFetch.forEach(guideID => {
                     let fetchedJSON, bodyOfGuide, htmlContainer, table;
-                    var requestURL = `https://telia-dk.humany.net/test-miljo/guides/${guideID}?language=da&credentials=true`;
+                    var requestURL = `https://telia-dk.humany.net/${DEFAULT.humanyInterfaceName}/guides/${guideID}?language=da&credentials=true`;
                     let request = new XMLHttpRequest();
                     request.onreadystatechange = function () {
                         if (this.readyState == 4 && this.status == 200) {
