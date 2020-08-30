@@ -1,20 +1,16 @@
-var newsPage = (function () {
+var newsPage = (function() {
     "use strict";
 
     // ---------------------- TO DO's ----------------------
-    // Make all content visible in the search field - use search field from store finder
     // If link in tabel does not contain http or https in front, then insert it (make it a href if its not)
-    // Insert newsPage.initiate(); in the humany guide and not in this script
-    // Set developer mode to false when testing in humany
-    // Search field should query all news content
-    // The modal in the html, shall either be there and reused when modal is clicked, or new modal shall be created every time
-    // In the initiate module, call a function with the inputfield and array as parameter
-    // Inside the new function - Add event listener to the input field
-    // On input, call function to search, parameter is the value from the searchfield this.value
-    // add event listener to //searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
+    // The img modal in the html, shall either be there and reused when modal is clicked, or new modal shall be created every time
+    // "https://telia-dk.humany.net/test-miljo/"; change this in the code to be a default (allbrands) or parse after last things in url, to make it work for all tjekit's
 
     // Trimmed data from the tables
     var allNewsContent = [];
+
+    // Filtered data from the tables
+    var filteredTableData = [];
 
     // Unique ID tracker to give elements ID's
     var uniqueNumber = 496373;
@@ -26,36 +22,63 @@ var newsPage = (function () {
     // All news blocks in the page
     var blocks = [];
 
+    // How many times the initiate function is retried
+    // If function cant fetch humany data tables, then function is retried after 2 seconds up to 3 times
+    var retryAttempt = 0;
+
+    // Keeps track of todays news
+    var newsCreatedToday = 0;
+
     // ---- TRANSLATIONS OF KEYS ----
     // Change here, if changed in the table by user
-    const tableKeys = {
-        day: "dag",                 // Creation DAY of the article
-        month: "måned",             // Same as above, but MONTH
-        year: "år",                 // Same as above, but YEAR
-        author: "afsender",         // The writers name, next to the pebble icon
-        icon: "logo",               // The pebble icon, or any other icon is specified
-        headline: "overskrift",     // Headline in the content section
-        contentText: "tekst",       // The actual text in the content section
-        img: "billede",             // Image if applicable, click to expand
-        href: "link",               // Href, humany guide or link to website
-        linkText: "linktekst"       // Label on the button which directs to the link
+    const tableKeyNames = {
+        day: "dag", // Creation DAY of the article
+        month: "måned", // Same as above, but MONTH
+        year: "år", // Same as above, but YEAR
+        author: "afsender", // The writers name, next to the pebble icon
+        icon: "logo", // The pebble icon, or any other icon is specified
+        headline: "overskrift", // Headline in the content section
+        contentText: "tekst", // The actual text in the content section
+        img: "billede", // Image if applicable, click to expand
+        href: "link", // Href, humany guide or link to website
+        linkText: "linktekst" // Label on the button which directs to the link
     };
 
     const DEFAULTS = {
-        developerMode: false,                            // Turn on for developer mode (local env)
-        pebble: "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png",  // Default pebble icon file path
-        humanyGuideTarget: "h-portal-main",             // Target table inside this element
-        notificationTableClass: "humany-notify-table",  // Notification tables where SU and PAIN news is located
-        overAllPageWrapper: "_newsPage-wrapper",        // The overall wrapper of the news page
-        newsSectionWrapperID: "_newsSection-wrapper",   // The wrapper which blocks shall be placed inside
-        resultsContainerID: "_news-search-dropdown",    // The unique ID of the search results element
-        searchContainer: "_news-selection-search",      // The element where searchfield sits inside
-        searchFieldID: "_news-selection-searchfield",   // ID of the search field
-        author: "BUSINESS QUALITY AND OPTIMIZATION",    // Default author name, if not specified
+        developerMode: false, // Turn on for developer mode (local env)
+        humanyInterfaceName: "test-miljo",
+        timesToRetryFetchingTableData: 10, // Humany tables loads slow, set the retry amount before timing out
+        pebble: "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png", // Default pebble icon file path
+        humanyGuideTarget: "h-portal-main", // Target table inside this element
+        notificationTableClass: "humany-notify-table", // Notification tables where SU and PAIN news is located
+        latestNewsWrapperID: "HumanyCustom-latest-news", // Wrapper for the "10 latest news" block in the humany frontpage
+        newsFromTodayText: "Nyhed fra i dag",
+        overAllPageWrapper: "_newsPage-wrapper", // The overall wrapper of the news page
+        newsSectionWrapperID: "_newsSection-wrapper", // The wrapper which blocks shall be placed inside
+        resultsContainerID: "_news-search-dropdown", // The unique ID of the search results element
+        searchContainer: "_news-selection-search", // The element where searchfield sits inside
+        searchFieldID: "_news-selection-searchfield", // ID of the search field
+        searchIconID: "_humany-search-ts-icon", // ID of the modal search field delete svg
+        searchDeleteIconID: "_humany-delete-ts-icon", // ID of the modal search field search svg
+        searchNothingFoundText: "Der blev ikke fundet noget!",
+        selectorFieldID: "_news-month-selector",
+        author: "BUSINESS QUALITY AND OPTIMIZATION", // Default author name, if not specified
         noTableFoundMsg: "Fejl: Der blev ikke fundet en tabel med data",
         moreThanOneTableMsg: "Fejl: Der er fundet mere end 1 tabel med data. Der må kun være 1 tabel på siden",
-        humanyNothing: "&nbsp;",                        // Means nothing in Humany editor language
-        valueCanContainTags: "contentText"              // One paramter which is allowed to have paragraphs/divs inside
+        ifNoLinkText: "Åben link", // Will be used if editor didnt give a link button a text/name
+        humanyNothing: "&nbsp;", // Means nothing in Humany editor language
+        isAllowedToContainHTMLtags: "contentText", // One paramter which is allowed to have paragraphs/divs inside
+        SelectorOptions: { // Options for the selector field in the modal
+            showAll: "Se alle nyheder",
+            onlyNewsFromSU: "Kun udmeldinger fra SU",
+            onlyNewsFromBOQ: "Kun nyheder om kunde pains"
+        },
+        newsTagOptions: {
+            isSU: ["SU", "S U", "S.U", "S. U", "SUPERUSER", "SUPER", "USER", "BRUGER"], // Determines that it is SU, if any of these is matching
+            isBusinessQuality: ["BOQ", "QUALITY", "BUSINESS", "OPTIMI", "ZATION", "PAIN", "LØST"], // Determines that it is BOQ, if any of these is mathing
+            ifSUsetTag: "SU", // Sets this as tag if article is made by SU
+            ifBOQsetTag: "BUSINESS QUALITY AND OPTIMIZATION" // Sets this as tag if article is made by BOQ
+        }
     };
 
     // ---- CSS CLASSES ----
@@ -84,15 +107,43 @@ var newsPage = (function () {
             searchResult: "news-search-result",
             noResult: "news-search-noresult",
             resultDate: "news-search-result-date"
+        },
+        icons: {
+            heart: "fa fa-heart", // FontAwesome class - Used for articles by business quality
+            info: "fa fa-info-circle", // FontAwesome class - Used for articles by SU
+            colorClassForBOQicon: "cmRed",
+            colorClassForSUicon: "tsPurple"
+        },
+        latestNews: {
+            blockHeader: "HumanyCustom-latest-news-header",
+            newsItem: "latestNewsItem",
+            newsHeadline: "latestNewsHeadline",
+            date: "latestNewsDate",
+            latestNewsCounter: "humany-latest-news-counter"
         }
     };
 
     // ---- DECLARE REMOVE-METHOD IN PROTOTYPE FOR IE ----
     if (!('remove' in Element.prototype)) {
-        Element.prototype.remove = function () {
+        Element.prototype.remove = function() {
             if (this.parentNode) {
                 this.parentNode.removeChild(this);
             }
+        };
+    }
+
+    // ---- .includes() POLYFILL for Internet Explorer and Opera ----
+    if (!String.prototype.includes) {
+        String.prototype.includes = function(search, start) {
+            'use strict';
+
+            if (search instanceof RegExp) {
+                throw TypeError('first argument must not be a RegExp');
+            }
+            if (start === undefined) {
+                start = 0;
+            }
+            return this.indexOf(search, start) !== -1;
         };
     }
 
@@ -103,51 +154,12 @@ var newsPage = (function () {
 
     return {
         /**
-         * INITIATER - THE START OF THE SCRIPT,
-         * this function is called from the humany guide after HTML is loaded
+         * INITIATER - THE START OF THE SCRIPT
          */
-        initiate: function () {
-            var modalImgs, imgCount, tableNodeList, overAllPageWrapper,
+        initiate: function() {
+            console.log("FUNCTION LOG: initate() invoked");
+            var modalImgs, imgCount, tableNodeList, overAllPageWrapper, deleteIcon,
                 tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, tableNodeListLenght;
-
-            // Clear global variables, since the eefe is only loaded once in humany
-            // And values in the variable will be dublicated everytime user loads the humany news page
-            allNewsContent = [];
-            elements = [];
-            blocks = [];
-
-            // ---- QUERY THE TABLE ----
-            // Get all available tables in the page
-            // if (DEFAULTS.developerMode == true) {
-            //     tableNodeList = document.querySelectorAll("table");
-            // } else {
-            //     tableNodeList = document.querySelector(`.${DEFAULTS.humanyGuideTarget}`)
-            //         .querySelectorAll("table");
-            // }
-
-            if (DEFAULTS.developerMode == true) {
-                tableNodeList = document.querySelectorAll("table");
-            } else {
-                tableNodeList = document.querySelectorAll(`.${DEFAULTS.notificationTableClass}`);
-
-                if (tableNodeList.length == 0) {
-                    console.log("News has not been loaded. Will redirect to homepage");
-                }
-
-            }
-
-            // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
-            // The table is only applicable in the editor interface
-            tableNodeListLenght = tableNodeList.length;
-            for (let i = 0; i < tableNodeList.length; i++) {
-                tableNodeList[i].style.display = "none";
-            }
-
-            // ---- DISPLAY THE PAGE INSIDE THE WRAPPER ----
-            // Wrapper content is not displayed inside the editor interface
-            // Is hidden with CSS as default, since scripts is not loaded in the humany editor
-            //overAllPageWrapper = document.querySelector(`#${DEFAULTS.overAllPageWrapper}`);
-            //overAllPageWrapper.style.display = "block";
 
             // ---- QUERY NEWS SECTION WRAPPER ----
             // Get the news section wrapper by ID to place blocks inside
@@ -155,45 +167,33 @@ var newsPage = (function () {
             // Place it inside the elements object for later reference
             elements.newsSectionWrapper = newsSectionWrapper;
 
-            // ---- PARSE TABLE TO JSON ONLY IF 1 TABLE IS FOUND ----
-            for (let i = 0; i < tableNodeListLenght; i++) {
-                tableJSON = newsPage.tableToJson(tableNodeList[i]);
-                console.log("tableJSON is: ", tableJSON);
-                this.trimTableData(tableJSON);
-            }
-
-            // if (tableNodeList.length === 1) {
-            //     tableJSON = newsPage.tableToJson(tableNodeList[0]);
-            //     //console.log("tableJSON", tableJSON);
-            //     // TrimTableData will push objects to allNewsContent
-            //     this.trimTableData(tableJSON);
-            //     // Else write out the errors in the console
-            // } else if (tableNodeList.length == 0) {
-            //     console.error(DEFAULTS.noTableFoundMsg);
-            // } else {
-            //     console.error(DEFAULTS.moreThanOneTableMsg);
-            // }
-
-            // ---- SORT JSON TABLEDATA BY DATE DESC ----
-            allNewsContent.sort(
-                function (a, b) {
-                    return b.date - a.date;
-                }
-            );
-
             // ---- SETUP AND PREPARE SEARCH FIELD ----
             searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
             // Add click event listener
-            searchField.addEventListener("input", function (event) {
+            searchField.addEventListener("input", function(event) {
                 // Remove all results
                 newsPage.removeSearchResults();
 
                 // Don't continue if there is no value
-                if (!this.value) { return; }
+                if (!this.value) {
+                    // Switch the icons
+                    document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "block";
+                    document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "none";
+                    return;
+                }
 
                 // Call the search function
                 newsPage.search(this.value);
             });
+
+            // ---- ADD EVENT LISTENERS TO THE SEARCH DELETE ICON ----
+            deleteIcon = document.querySelector(`#${DEFAULTS.searchDeleteIconID}`);
+            deleteIcon.addEventListener("click", function(event) {
+                newsPage.clearSearch();
+            });
+
+            // ---- SETUP SELECTOR FIELDS ----
+            this.setupSelector();
 
             // ---- CREATE THE HTML BLOCKS ----
             // Loop through all news objects and create blocks for each
@@ -203,29 +203,15 @@ var newsPage = (function () {
                 this.createHTMLBlock(dataObject);
             }
 
-            // ---- HOW TO QUERY THE DATE ----
-            // console.log(blocks[0]
-            //     .querySelector(`.${classNames.headerSectionInBlock}`)
-            //     .querySelector(`.${classNames.authorAndDateInfos}`)
-            //     .querySelector(`.${classNames.date}`).innerHTML);
-            //elements.newsSectionWrapper.appendChild(blocks[0]);
-            //console.log(blocks);
-
-            // ---- ADD 'CLICK' EVENT LISTENERS TO IMAGES IN THE BLOCKS ----
-            // Get all images in the page
-            modalImgs = document.querySelectorAll(`.${classNames.image}`);
-            imgCount = modalImgs.length;
-            // Add event listeners to all images in the page
-            for (var i = 0; i < imgCount; i++) {
-                modalImgs[i].addEventListener("click", function () {
-                    // On click on image, open modal
-                    // Use image source as parameter
-                    newsPage.openNewsModal(this.src);
-                });
-            }
+            console.log("FUNCTION LOG: initiate() is done");
         },
 
-        fetchNotificationTables: function () {
+        /**
+         * WILL FETCH THE DATA IN THE NOTIFICATION TABLES
+         * Includes a call to initiate() when done
+         */
+        fetchNotificationTables: function() {
+            console.log("FUNCTION LOG: fetchNotificationTables() invoked");
             var modalImgs, imgCount, tableNodeList, tableNodeListLenght, overAllPageWrapper,
                 tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, dateString;
 
@@ -240,11 +226,8 @@ var newsPage = (function () {
             if (DEFAULTS.developerMode == true) {
                 tableNodeList = document.querySelectorAll("table");
             } else {
-                console.log(DEFAULTS.notificationTableClass);
                 tableNodeList = document.querySelectorAll(`.${DEFAULTS.notificationTableClass}`);
             }
-
-            console.log("tableNodeList", tableNodeList);
 
             // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
             // The table is only applicable in the editor interface
@@ -253,61 +236,122 @@ var newsPage = (function () {
                 tableNodeList[i].style.display = "none";
             }
 
-            // ---- QUERY THE BLOCK TO DISPLAY LATEST NEWS ----
-            // Get the target block by ID to place latest news inside
-            newsSectionWrapper = document.querySelector(`#HumanyCustom-latest-news`);
-            // Place it inside the elements object for later reference
-            elements.latestNewsBlock = newsSectionWrapper;
+            // ---- RETRY CALLS IF TABLES IS NOT LOADED YET ----
+            if (tableNodeListLenght === 0) {
+                if (retryAttempt < DEFAULTS.timesToRetryFetchingTableData) {
+                    setTimeout(function() {
+                        console.log("FUNCTION LOG: fetchnotificationTables attempt: ", retryAttempt);
+                        newsPage.fetchNotificationTables();
+                    }, 1000);
+                    retryAttempt++;
+                }
+            } else {
+                // ---- QUERY THE BLOCK TO DISPLAY LATEST NEWS ----
+                // Get the target block by ID to place latest news inside
+                newsSectionWrapper = document.querySelector(`#${DEFAULTS.latestNewsWrapperID}`);
+                newsSectionWrapper.style.display = "block";
+                console.log("EVENT: Toggled on news block in panel");
+                // Place it inside the elements object for later reference
+                elements.latestNewsBlock = newsSectionWrapper;
+            }
 
             // ---- PARSE TABLES DATA TO JSON ----
             for (let i = 0; i < tableNodeListLenght; i++) {
                 tableJSON = newsPage.tableToJson(tableNodeList[i]);
-                console.log("tableJSON", tableJSON);
                 this.trimTableData(tableJSON);
             }
 
             // ---- SORT JSON TABLEDATA BY DATE DESC ----
             allNewsContent.sort(
-                function (a, b) {
+                function(a, b) {
                     return b.date - a.date;
                 }
             );
 
             // ---- CREATE NEWS ELEMENTS IN THE TOP-10 BLOCK ----
             allNewsContentLenght = allNewsContent.length;
-            for (let i = 0; i < allNewsContentLenght; i++) {
-                let newsItem, newsHeadline, newsDate;
+            for (let i = 0; i < 9; i++) {
+                let newsItem, newsHeadline, newsHeadlineIcon, newsDate, iconClass;
 
-                newsItem = new this.Template(
-                    {
+                // ---- CONTAINER FOR HEADLINE AND DATE ----
+                // If data tables in humany is not loaded yet, dont show ugly errors in console
+                try {
+                    newsItem = new this.Template({
                         tag: "DIV",
-                        class: "latestNewsItem",
+                        class: classNames.latestNews.newsItem,
                         id: allNewsContent[i].uniqueID
-                    }
-                ).create();
-                newsItem.addEventListener("click", function (event) {
-                    console.log(this.id);
+                    }).create();
+                } catch (error) {
+                    console.log("Tables not loaded yet. Retrying to fetch data.")
+                    // There is a another function retrying to fetch tabledata
+                    return;
+                }
+                // Open modal and scroll to clicked element
+                newsItem.addEventListener("click", function(event) {
+                    triggers.toggleNewsModal();
+                    newsPage.scrollToBlock(this.id);
                 });
+                // Place element inside news block in Humany's front page
                 elements.latestNewsBlock.appendChild(newsItem);
 
-                newsHeadline = new this.Template(
-                    {
-                        tag: "P",
-                        class: "latestNewsHeadline",
-                        innerHTML: allNewsContent[i].headline
-                    }
-                ).create();
+                // ---- HEADLINE INSIDE THE ELEMENT ----
+                newsHeadline = new this.Template({
+                    tag: "DIV",
+                    class: classNames.latestNews.newsHeadline
+                }).create();
                 newsItem.appendChild(newsHeadline);
 
-                    newsDate = new this.Template(
-                        {
-                            tag: "P",
-                            class: "latestNewsDate",
-                            innerHTML: allNewsContent[i].dateString
-                        }
-                    ).create();
+                // ---- ICON FOR THE HEADLINE ----
+                // Logic for which icon to display
+                if (allNewsContent[i].tag == DEFAULTS.newsTagOptions.ifBOQsetTag) {
+                    iconClass = `${classNames.icons.heart} iconToTextGap ${classNames.icons.colorClassForBOQicon}`;
+                } else {
+                    iconClass = `${classNames.icons.info} iconToTextGap ${classNames.icons.colorClassForSUicon}`;
+                }
+                newsHeadlineIcon = new this.Template({
+                    tag: "I",
+                    class: iconClass,
+                    //innerHTML: `<span class="spanBeforeIcon black arial"> ${allNewsContent[i].headline}</span>`
+                }).create();
+                newsHeadline.appendChild(newsHeadlineIcon);
+                newsHeadline.innerHTML += allNewsContent[i].headline;
+
+                // ---- DATE INSIDE THE ELEMENT ----
+                newsDate = new this.Template({
+                    tag: "DIV",
+                    class: classNames.latestNews.date,
+                    innerHTML: allNewsContent[i].dateString
+                }).create();
                 newsItem.appendChild(newsDate);
             }
+
+            // ---- GENERATE NEWS COUNTER MESSAGE IF THERE IS ANY NEWS MATCHING TODAYS DATE ----
+            if (newsCreatedToday > 0) {
+                var todaysNewsCounter, correctExpression;
+
+                if (newsCreatedToday > 1) {
+                    correctExpression = "nyheder"
+                } else {
+                    correctExpression = "nyhed"
+                }
+
+                todaysNewsCounter = new this.Template({
+                    tag: "P",
+                    class: classNames.latestNews.latestNewsCounter,
+                    innerHTML: `Der er <span class="newsCountBadge">${newsCreatedToday}</span> ${correctExpression} fra i dag`
+                }).create();
+                var target = document.querySelector(`.${classNames.latestNews.blockHeader}`);
+                target.appendChild(todaysNewsCounter);
+            }
+
+            // ---- REMOVE BLANK DIV IN THE LEFT PANEL ELEMENT ----
+            // It is there because humany has an error where css border is not fully applied on load
+            let blankHackDiv = document.querySelector(`#_humany-blank-hack-1`);
+            blankHackDiv.style.display = "none";
+
+            // ---- CALL INITIATE TO SETUP HTML ELEMENTS AND PAGES ----
+            this.initiate();
+            console.log("FUNCTION LOG: fetchNotifcationTables() is done");
         },
 
         /**
@@ -315,7 +359,7 @@ var newsPage = (function () {
          * First row needs to be headers!
          * @param {Object} table Object containing the table data (rows/columns) queried in the page
          */
-        tableToJson: function (table) {
+        tableToJson: function(table) {
             var data = [];
             var headers = [];
 
@@ -332,7 +376,8 @@ var newsPage = (function () {
                 var rowData = {};
                 for (var j = 0; j < tableRow.cells.length; j++) {
                     rowData[headers[j]] = tableRow.cells[j].innerHTML;
-                } data.push(rowData);
+                }
+                data.push(rowData);
             }
             return data;
         },
@@ -342,19 +387,182 @@ var newsPage = (function () {
          * Will update allNewsContent with the "clean" data
          * @param {Object} data The JSON data object, the "tableJSON"
          */
-        trimTableData: function (data) {
+        trimTableData: function(data) {
             let objLenght, i;
+
             objLenght = data.length;
+
+            /**
+             * REMOVE SPECIAL CHARS WHICH MEANS NOTHING IN HUMANY
+             * @param {string} value The value which shall be checked for special Humany chars
+             */
+            let removeEmptyValues = function(value, key) {
+                // ---- CHECK IF STRING VALUE MEANS EMPTY ----
+                if (value.includes(DEFAULTS.humanyNothing)) {
+                    // Replace rubbish
+                    value = value.replace(/&nbsp;/g, "");
+                }
+
+                // Check if its not the field "contentText", which is allowed to contain
+                // html tags and such, since it is the text area in the article
+                if (key == DEFAULTS.isAllowedToContainHTMLtags == false) {
+                    // Remove paragraphs
+                    if (value.includes("<p>")) {
+                        let replacement = value.replace(/<p>/g, "");
+                        replacement = replacement.replace(/<\/p>/g, "");
+                        value = replacement;
+                    }
+                    // Remove div tags
+                    if (value.includes("<div>")) {
+                        let replacement = value.replace(/<div>/g, "");
+                        replacement = replacement.replace(/<\/div>/g, "");
+                        value = replacement;
+                    }
+                    // Remove linebreaks
+                    if (value.includes("<br>")) {
+                        let replacement = value.replace(/<br>/g, " ");
+                        replacement = replacement.replace(/<\/br>/g, " ");
+                        value = replacement;
+                    }
+                    // Remove links and only keep the URL
+                    // if (value.includes("<a href")) {
+                    //     let replacement = value.replace(/<a\b[^>]*>/i, "").replace(/<\/a>/i, "");
+                    //     value = replacement;
+                    // }
+                    // Remove 0 if its the first char
+                    if (value.slice(0, 1) == "0") {
+                        let replacement = value.replace(/^0+/, '');
+                        value = replacement;
+                    }
+                }
+                return value;
+            };
+
+            /**
+             * MAKES SURE DATESTRING IS WRITTEN IN CORRECT DANISH TO THE USER
+             * @param {string} month month which shall be translated to danish
+             */
+            let cleanUpMonth = function(month) {
+                let translatedMonth;
+
+                const danishMonthsNumbers = {
+                    1: "Januar",
+                    2: "Februar",
+                    3: "Marts",
+                    4: "April",
+                    5: "Maj",
+                    6: "Juni",
+                    7: "Juli",
+                    8: "August",
+                    9: "September",
+                    10: "Oktober",
+                    11: "November",
+                    12: "December"
+                };
+
+                const correctSpelledMonths = {
+                    jan: "Januar",
+                    feb: "Februar",
+                    mar: "Marts",
+                    apr: "April",
+                    maj: "Maj",
+                    may: "Maj",
+                    jun: "Juni",
+                    jul: "Juli",
+                    aug: "August",
+                    sept: "September",
+                    okt: "Oktober",
+                    oct: "Oktober",
+                    nov: "November",
+                    dec: "December"
+                };
+
+                //if (!translatedMonth) {
+                Object.keys(correctSpelledMonths).forEach(function(key) {
+                    if (month.toLowerCase().includes(key)) {
+                        translatedMonth = correctSpelledMonths[key];
+                    }
+                });
+
+                if (translatedMonth) {
+                    return translatedMonth;
+                } else {
+                    return month;
+                }
+            };
+
+            /**
+             * TURNS DANISH DATE NAMES INTO ENGLISH
+             * @param {string} month Danish month will shall be translated to english
+             */
+            let getEnglishMonth = function(month) {
+                let monthInEnglish;
+
+                const months = {
+                    jan: "january",
+                    feb: "february",
+                    mar: "march",
+                    apr: "april",
+                    maj: "may",
+                    jun: "june",
+                    jul: "july",
+                    aug: "august",
+                    sept: "september",
+                    okt: "october",
+                    nov: "november",
+                    dec: "december"
+                };
+
+                const monthInNumbers = {
+                    1: "january",
+                    2: "february",
+                    3: "march",
+                    4: "april",
+                    5: "may",
+                    6: "june",
+                    7: "july",
+                    8: "august",
+                    9: "september",
+                    10: "october",
+                    11: "november",
+                    12: "december"
+                };
+
+                if (isNaN(month) == true) {
+                    Object.keys(months).forEach(function(key) {
+                        if (month.toLowerCase().includes(key)) {
+                            monthInEnglish = months[key];
+                        } else if (month.toLowerCase().includes(months[key])) {
+                            monthInEnglish = months[key];
+                        }
+                    });
+                }
+
+                if (!monthInEnglish) {
+                    month = parseInt(month, 10);
+                    Object.keys(monthInNumbers).forEach(function(key) {
+                        if (month == key) {
+                            monthInEnglish = monthInNumbers[key];
+                        }
+                    });
+                }
+
+                if (monthInEnglish) {
+                    return monthInEnglish;
+                } else {
+                    return month;
+                }
+            };
 
             /**
              * GETS THE DEFAULT KEY TO QUERY THE VALUES INSIDE THE DATA-OBJECT
              * @param {int} index index of the data object which is queried
-             * @param {string} propName Name of the tableKeys object key
+             * @param {string} propName Name of the tableKeyNames object key
              */
-            let getData = function (index, key) {
+            let getData = function(index, key) {
                 // ---- GET VALUES WITH KEYS FROM THE JSON OBJECT ----
-                // JSON object[index number] with the correct key from tableKeys object
-                let value = data[index][tableKeys[key]];
+                // JSON object[index number] with the correct key from tableKeyNames object
+                let value = data[index][tableKeyNames[key]];
                 value = removeEmptyValues(value, key);
                 // if value is undefined, then we need to get a default value, cause there always needs to be something for most things
                 // or simply just hardcode if statements on all hmtl block creations, so there will always be linked a default value
@@ -362,70 +570,83 @@ var newsPage = (function () {
             };
 
             /**
-             * REMOVE SPECIAL CHARS WHICH MEANS NOTHING IN HUMANY
-             * @param {string} value The value which shall be checked for special Humany chars
+             * CHECK IF 2 DATES ARE THE SAME
+             * @param {object} first First date object
+             * @param {object} second Second date object to compare
              */
-            let removeEmptyValues = function (value, key) {
-                console.log(key);
-                // ---- CHECK IF STRING VALUE MEANS EMPTY ----
-                if (value.includes(DEFAULTS.humanyNothing)) {
-                    // Replace rubbish
-                    value = value.replace(/&nbsp;/g, "");
-                }
+            const checkIfDateIsSame = (first, second) =>
+                first.getFullYear() === second.getFullYear() &&
+                first.getMonth() === second.getMonth() &&
+                first.getDate() === second.getDate();
 
-                if (key == DEFAULTS.valueCanContainTags == false) {
-
-                    if ( value.includes("<p>") ) {
-                        let replacement = value.replace(/<p>/g, "");
-                        replacement = replacement.replace(/<\/p>/g, "");
-                        value = replacement;
-                    }
-
-                    if ( value.includes("<div>") ) {
-                        let replacement = value.replace(/<div>/g, "");
-                        replacement = replacement.replace(/<\/div>/g, "");
-                        value = replacement;
-                    }
-
-                    if ( value.includes("<br>") ) {
-                        let replacement = value.replace(/<br>/g, " ");
-                        replacement = replacement.replace(/<\/br>/g, " ");
-                        value = replacement;
-                    }
-
-                    if ( value.includes("<a href") ) {
-                        let replacement = value.replace(/<a\b[^>]*>/i,"").replace(/<\/a>/i, "");
-                        value = replacement;
-                    }
-                }
-
-                return value;
-            };
-
+            // ---- GET AND TRIM DATA FROM THE OBJECT ----
             for (i = 0; i < objLenght; i++) {
                 let newsData = {};
-                let day, month, year, author, icon;
+                let day, month, rawMonth, monthInEnglish, monthInDanish, year, author, icon;
                 let headline, innerHTML, image, link, linkText;
+                let isTagged = false;
 
                 // ---- TRIM AND CREATE DATES ----
                 day = getData(i, "day").trim();
-                month = getData(i, "month").trim();
+                rawMonth = getData(i, "month").trim();
+                // Make sure the month is in english for creating the date object (for sorting)
+                monthInEnglish = getEnglishMonth(rawMonth);
+                // And write it correctly in danish for showing to the users
+                monthInDanish = cleanUpMonth(monthInEnglish);
                 year = getData(i, "year").trim();
 
                 // ---- ASSIGN THE DATES TO THE OBJECT ----
-                newsData.dateString = `${day}. ${month} ${year}`;   // Date as string for showing in page
-                newsData.date = new Date(`${month} ${day}, ${year} 00:00:00`);  // Date object for sorting
+                // Get todays date for comparing
+                var today = new Date();
+                // Add 1, since the translation index starts at: 1 = January
+                var todaysMonthString = getEnglishMonth(today.getMonth() + 1);
+                // Get the month translated from number to text
+                //var todaysMonthString = getEnglishMonth(datePlusOne);
+                var todaysDate = new Date(`${todaysMonthString}, ${today.getDate()}, ${today.getFullYear()} 00:00:00`);
+
+                newsData.date = new Date(`${monthInEnglish} ${day}, ${year} 00:00:00`); // Date object for sorting
+                if (checkIfDateIsSame(newsData.date, todaysDate)) {
+                    newsData.dateString = DEFAULTS.newsFromTodayText;
+                    // Update to keep a counter showing how many news is from today
+                    newsCreatedToday++;
+                } else {
+                    newsData.dateString = `${day}. ${monthInDanish} ${year}`; // Date as string for showing in page
+                }
 
                 // ---- CLEAN AUTHOR NAME STRING AND TURN TO UPPER CASE ----
                 newsData.author = getData(i, "author").trim().toUpperCase();
+                // Give author default value if nothing is specified by user
+                if (!newsData.author) {
+                    newsData.author = DEFAULTS.author;
+                }
+
+                // ---- TRY TO TAG AS SUPER USER (SU) ARTICLE ----
+                DEFAULTS.newsTagOptions.isSU.forEach(tag => {
+                    if (newsData.author.includes(tag)) {
+                        newsData.tag = DEFAULTS.newsTagOptions.ifSUsetTag;
+                        isTagged = true;
+                    }
+                });
+
+                // ---- TRY TO TAG AS AN BUSINESS QUALITY ARTICLE ----
+                if (!isTagged) {
+                    DEFAULTS.newsTagOptions.isBusinessQuality.forEach(tag => {
+                        if (newsData.author.includes(tag)) {
+                            newsData.tag = DEFAULTS.newsTagOptions.ifBOQsetTag;
+                            isTagged = true;
+                        }
+                    });
+                }
+
+                if (!isTagged) {
+                    newsData.tag = "DEFAULT";
+                    isTagged = true;
+                }
 
                 // ---- DETERMINE WHICH ICON TO USE ----
-                icon = getData(i, "icon").trim();
-                if (icon.toLowerCase() === "pebble") {
-                    newsData.icon = DEFAULTS.pebble;
-                } else {
-                    newsData.icon = icon;
-                }
+                newsData.icon = DEFAULTS.pebble;
+                // Use this if you want user to be able to define icons
+                // icon = getData(i, "icon").trim(); if (icon.toLowerCase() === "pebble") { newsData.icon = DEFAULTS.pebble; } else { newsData.icon = icon; }
 
                 // ---- TRIM (REMOVE WHITESPACES) THE REST OF THE VALUES ----
                 newsData.headline = getData(i, "headline").trim();
@@ -438,126 +659,250 @@ var newsPage = (function () {
                 newsData.uniqueID = `news_${uniqueNumber}`;
                 uniqueNumber++;
 
-                // ---- PUSH EVERY OBJECT INTO THE ARRAY ----
+                // ---- PUSH EVERY OBJECT INTO THE ARRAYS ----
                 allNewsContent.push(newsData);
+                filteredTableData.push(newsData);
             }
-
-            console.log("allNewsContent", allNewsContent);
+            console.log("FETCHED DATA IN TABLE: all news content", allNewsContent);
+            console.log("FETCHED DATA IN TABLE: filteredTableData", filteredTableData);
         },
 
         /**
          * CREATE HTML ELEMENTS BASED ON THE DATA OBJECT AS PARAMETER
          * @param {Object} props Object containing all data needed for creating the news block
          */
-        createHTMLBlock: function (props) {
+        createHTMLBlock: function(props) {
             let newsBlockWrapper, newsBlockHeader, newsBlockLogo,
                 logoImage, newsBlockInfos, newsBlockAuthor, newsBlockDate,
                 newsBlockContent, contentHeadline, contentParagraph,
-                photosElement, photo, referenceElement, linkButton;
+                photosElement, photo, referenceElement, linkButton, allLinks, linkContainerContent, option;
 
             // ---- WRAPPER FOR EACH BLOCK IN THE PAGE ----
-            newsBlockWrapper = new this.Template(
-                { tag: "DIV", class: classNames.mainBlockWrapper, id: props.uniqueID }
-            ).create();
+            newsBlockWrapper = new this.Template({
+                tag: "DIV",
+                class: classNames.mainBlockWrapper,
+                id: props.uniqueID
+            }).create();
             // Append inside the wrapper for the news section
             elements.newsSectionWrapper.appendChild(newsBlockWrapper);
 
             // ---- HEADER SECTION ----
-            newsBlockHeader = new this.Template(
-                { tag: "DIV", class: classNames.headerSectionInBlock }
-            ).create();
+            newsBlockHeader = new this.Template({
+                tag: "DIV",
+                class: classNames.headerSectionInBlock
+            }).create();
             newsBlockWrapper.appendChild(newsBlockHeader);
 
             // ---- ELEMENT TO HOLD THE ICON/LOGO ----
-            newsBlockLogo = new this.Template(
-                { tag: "DIV", class: classNames.elementForTheLogo }
-            ).create();
+            newsBlockLogo = new this.Template({
+                tag: "DIV",
+                class: classNames.elementForTheLogo
+            }).create();
             newsBlockHeader.appendChild(newsBlockLogo);
 
             // ---- THE ICON/LOGO IMAGE ----
             if (!props.icon) {
                 props.icon = DEFAULTS.pebble;
             }
-            logoImage = new this.Template(
-                { tag: "IMG", class: classNames.logoImg, imageSrc: props.icon }
-            ).create();
+            logoImage = new this.Template({
+                tag: "IMG",
+                class: classNames.logoImg,
+                imageSrc: props.icon
+            }).create();
             newsBlockLogo.appendChild(logoImage);
 
             // ---- THE INFORMATION ELEMENT (for author name and date) ----
-            newsBlockInfos = new this.Template(
-                { tag: "DIV", class: classNames.authorAndDateInfos }
-            ).create();
+            newsBlockInfos = new this.Template({
+                tag: "DIV",
+                class: classNames.authorAndDateInfos
+            }).create();
             newsBlockHeader.appendChild(newsBlockInfos);
 
             // ---- AUTHOR NAME HEADLINE TAG ----
-            if (!props.author) { props.author = DEFAULTS.author; }
-            newsBlockAuthor = new this.Template(
-                {
-                    tag: "H2",
-                    class: classNames.author,
-                    innerHTML: props.author
-                }
-            ).create();
+            if (!props.author) {
+                props.author = DEFAULTS.author;
+            }
+            newsBlockAuthor = new this.Template({
+                tag: "H2",
+                class: classNames.author,
+                innerHTML: props.author
+            }).create();
             newsBlockInfos.appendChild(newsBlockAuthor);
 
             // ---- CREATION DATE HEADLINE TAG ----
-            newsBlockDate = new this.Template(
-                { tag: "H3", class: classNames.date, innerHTML: props.dateString }
-            ).create();
+            newsBlockDate = new this.Template({
+                tag: "H3",
+                class: classNames.date,
+                innerHTML: props.dateString
+            }).create();
             newsBlockInfos.appendChild(newsBlockDate);
 
             // ---- ELEMENT TO HOLD THE CONTENT ----
-            newsBlockContent = new this.Template(
-                { tag: "DIV", class: classNames.contentSection }
-            ).create();
+            newsBlockContent = new this.Template({
+                tag: "DIV",
+                class: classNames.contentSection
+            }).create();
             newsBlockWrapper.appendChild(newsBlockContent);
 
             // ---- HEADLINE OF THE CONTENT (text/images) SECTION ----
-            contentHeadline = new this.Template(
-                { tag: "H3", class: classNames.contentHeadline, innerHTML: props.headline }
-            ).create();
+            contentHeadline = new this.Template({
+                tag: "H3",
+                class: classNames.contentHeadline,
+                innerHTML: props.headline
+            }).create();
             newsBlockContent.appendChild(contentHeadline);
 
             // ---- THE TEXT IN THE CONTENT ----
-            contentParagraph = new this.Template(
-                { tag: "p", class: classNames.textInContent, innerHTML: props.innerHTML }
-            ).create();
+            contentParagraph = new this.Template({
+                tag: "p",
+                class: classNames.textInContent,
+                innerHTML: props.innerHTML
+            }).create();
             newsBlockContent.appendChild(contentParagraph);
+
+            // ---- QUERY ALL LINKS IN THE CONTENT ----
+            var linksInText = contentParagraph.querySelectorAll("a");
+            linksInText.forEach(function(link) {
+                // Make sure links open in new tab or window
+                link.target = "_blank";
+            });
 
             // ---- IMAGES IN THE CONTENT SECTION ----
             // If there is no image starting with http, then the value shall be undefined
             // And therefore the image element will not be created
-            if (!props.image.includes("http")) { props.image = undefined; }
             if (props.image) {
-                photosElement = new this.Template(
-                    { tag: "DIV", class: classNames.imageContainer }
-                ).create();
+                if (!props.image.includes("http")) {
+                    props.image = undefined;
+                }
+                photosElement = new this.Template({
+                    tag: "DIV",
+                    class: classNames.imageContainer
+                }).create();
+
                 newsBlockWrapper.appendChild(photosElement);
 
                 // ---- THE IMAGE TAG ----
-                photo = new this.Template(
-                    { tag: "IMG", class: classNames.image, imageSrc: props.image }
-                ).create();
+                photo = new this.Template({
+                    tag: "IMG",
+                    class: classNames.image,
+                    imageSrc: props.image
+                }).create();
+
+                // Add click event listener to the image,
+                // To display modal with image when user clicks
+                photo.addEventListener("click", function(event) {
+                    newsPage.openNewsModal(this.src);
+                });
+
                 photosElement.appendChild(photo);
             }
 
             // ---- REFERENCES SECTION (for links/buttons) ----
-            if (props.linkText) {
-                referenceElement = new this.Template(
-                    { tag: "DIV", class: classNames.linksAndButtonsSection }
-                ).create();
+            if (props.link) {
+                referenceElement = new this.Template({
+                    tag: "DIV",
+                    class: classNames.linksAndButtonsSection
+                }).create();
+
                 newsBlockWrapper.appendChild(referenceElement);
 
-                // ---- THE BUTTON WITH A CLICK LISTENER TO URL ----
-                linkButton = new this.Template(
-                    { tag: "BUTTON", class: classNames.linkButton, innerHTML: props.linkText }
-                ).create();
-                linkButton.addEventListener("click", function (event) {
-                    window.location = props.link;
+                var linkElement = new this.Template({
+                    tag: "div",
+                    innerHTML: props.link
+                }).create();
+
+                // Get all links and place them inside the section
+                //linkContainerContent = props.link.innerHTML;
+                allLinks = linkElement.querySelectorAll("a");
+                allLinks.forEach(function(link) {
+                    // Give it the class for link buttons
+                    link.className = classNames.linkButton;
+
+                    if (link.href.toLowerCase().includes("http") == false) {
+                        // If it does not contain http, its most likely a link to a humany guide
+                        link.addEventListener("click", function(event) {
+                            // Close and reset modal
+                            triggers.toggleNewsModal();
+                            newsPage.resetModalFilter();
+                        });
+                    } else {
+                        // Make sure it opens in a new tab or window
+                        link.target = "_blank";
+                    }
+
+                    // Place it inside the reference section in the block
+                    referenceElement.appendChild(link);
+
                 });
-                referenceElement.appendChild(linkButton);
+
+                // ---- THE BUTTON WITH A CLICK LISTENER TO URL ----
+                // Create button with default textlabel, if nothing is defined
+                // if (!props.linkText) { props.linkText = DEFAULTS.ifNoLinkText; }
+                // linkButton = new this.Template(
+                //     {
+                //         tag: "A",
+                //         class: classNames.linkButton,
+                //         innerHTML: props.linkText
+                //     }
+                // ).create();
+
+                // Add /[interfaceName]/ to the link, only if it does not contain http
+                // if (props.link.toLowerCase().includes("http") == false) {
+                //     // And then, if user already included the interfaceName in the link
+                //     if (props.link.toLowerCase().includes(DEFAULTS.humanyInterfaceName)) {
+                //         // Dont include interface name
+                //         linkButton.href = `/${props.link}`;
+                //     } else {
+                //         // Include interfacename if not specified in the link
+                //         linkButton.href = `/${DEFAULTS.humanyInterfaceName}/${props.link}`;
+                //     }
+                //     // These are not opening in new tabs, so add listener to close modal on click
+                //     linkButton.addEventListener("click", function (event) {
+                //         // Close the modal when directing to guide inside humany
+                //         triggers.toggleNewsModal();
+                //         // Reset modal search and filter, since modal is closing
+                //         newsPage.resetModalFilter();
+                //     });
+                // } else {
+                //     linkButton.href = props.link;
+                //     // The target should be new tab or window (depending on browser preference)
+                //     linkButton.target = "_blank";
+                // }
+                // // Close modal when a button link is clicked
+                // // linkButton.addEventListener("click", function (event) {
+                // //     // Close the modal when directing to guide inside humany
+                // //     triggers.toggleNewsModal();
+                // //     // Reset modal search and filter, since modal is closing
+                // //     newsPage.resetModalFilter();
+                // // });
+
+                // referenceElement.appendChild(linkButton);
             }
+
             blocks.push(newsBlockWrapper);
+        },
+
+        /**
+         * WILL SETUP THE SELECTOR FIELD IN THE MODAL
+         */
+        setupSelector: function() {
+            let option, selector, objectLength;
+            selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
+
+            Object.keys(DEFAULTS.SelectorOptions).forEach(key => {
+                option = new this.Template({
+                    tag: "OPTION",
+                    class: "",
+                    id: "",
+                    innerHTML: DEFAULTS.SelectorOptions[key]
+                }).create();
+                selector.appendChild(option);
+            });
+
+            // ---- WHEN SELECTOR CHANGES, CALL APPLY FILTER FUNCTION ----
+            selector.addEventListener("change", function(event) {
+                newsPage.applyFilter(this.value);
+            });
         },
 
         /**
@@ -566,33 +911,34 @@ var newsPage = (function () {
          * Function is called from event listener on the input field
          * @param {string} input What the user has typed in the search field
          */
-        search: function (input) {
-            let parentContainer, resultsContainer, arrayLenght, noResultMsg;
-            arrayLenght = allNewsContent.length;
+        search: function(input) {
+            let parentContainer, resultsContainer, arrayLenght, noResultMsg,
+                //arrayToQuery = allNewsContent;
+                arrayToQuery = filteredTableData;
+
+            arrayLenght = arrayToQuery.length;
 
             // ---- QUERY THE PARENT TARGET ----
             parentContainer = document.querySelector(`#${DEFAULTS.searchContainer}`);
 
             // ---- CREATE SEARCH RESULT CONTAINER ----
-            resultsContainer = new this.Template(
-                {
-                    tag: "DIV",
-                    class: classNames.search.resultsContainer,
-                    id: DEFAULTS.resultsContainerID
-                }
-            ).create();
-
-            // Append in parent, below the searchfield
+            resultsContainer = new this.Template({
+                tag: "DIV",
+                class: classNames.search.resultsContainer,
+                id: DEFAULTS.resultsContainerID
+            }).create();
             parentContainer.appendChild(resultsContainer);
 
+            // Switch the icons
+            document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "none";
+            document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "block";
+
             // ---- CREATE NOTHING-FOUND MESSAGE ELEMENT ----
-            noResultMsg = new this.Template(
-                {
-                    tag: "DIV",
-                    class: classNames.search.noResult,
-                    innerHTML: "Der blev ikke fundet noget!"
-                }
-            ).create();
+            noResultMsg = new this.Template({
+                tag: "DIV",
+                class: classNames.search.noResult,
+                innerHTML: DEFAULTS.searchNothingFoundText
+            }).create();
             resultsContainer.appendChild(noResultMsg);
 
             // ---- LOOP THROUGH AND SEARCH FOR MATCH ON HEADLINE ----
@@ -601,16 +947,16 @@ var newsPage = (function () {
                     resultAuthorElement, resultDateElement;
 
                 // ---- GET THE HEADLINE STRING ----
-                headline = allNewsContent[i].headline;
+                headline = arrayToQuery[i].headline;
                 // Remove special characters except these
-                headline = headline.replace(/[^a-zA-Z0-9.æøå!#%& ]/g, "");
+                headline = headline.replace(/[^a-zA-Z0-9.æøåÆØÅ!#%& ]/g, "");
                 headlineLenght = headline.length;
 
                 // ---- GET AUTHOR STRING ----
-                author = allNewsContent[i].author;
+                author = arrayToQuery[i].author;
 
                 // ---- GET THE DATE STRING ----
-                date = allNewsContent[i].dateString;
+                date = arrayToQuery[i].dateString;
                 // Remove characters
                 date = date.replace('.', '');
 
@@ -619,22 +965,18 @@ var newsPage = (function () {
                 queryStringLenght = queryString.length;
 
                 // ---- CREATE ELEMENT DISPLAYING THE AUTHOR ----
-                resultAuthorElement = new this.Template(
-                    {
-                        tag: "P",
-                        class: classNames.search.resultDate,
-                        innerHTML: author
-                    }
-                ).create();
+                resultAuthorElement = new this.Template({
+                    tag: "P",
+                    class: classNames.search.resultDate,
+                    innerHTML: author
+                }).create();
 
                 // ---- CREATE ELEMENT DISPLAYING THE DATE ----
-                resultDateElement = new this.Template(
-                    {
-                        tag: "P",
-                        class: classNames.search.resultDate,
-                        innerHTML: date
-                    }
-                ).create();
+                resultDateElement = new this.Template({
+                    tag: "P",
+                    class: classNames.search.resultDate,
+                    innerHTML: date
+                }).create();
 
                 // ---- SEARCH HEADLINE STRING ----
                 for (let j = 0; j < queryStringLenght; j++) {
@@ -648,13 +990,11 @@ var newsPage = (function () {
                         noResultMsg.remove();
 
                         // ---- CREATE SEARCH RESULT ----
-                        result = new this.Template(
-                            {
-                                tag: "DIV",
-                                class: classNames.search.searchResult,
-                                innerHTML: headline.substr(0, j)
-                            }
-                        ).create();
+                        result = new this.Template({
+                            tag: "DIV",
+                            class: classNames.search.searchResult,
+                            innerHTML: headline.substr(0, j)
+                        }).create();
                         resultsContainer.appendChild(result);
 
                         // ---- HIGHLIGHT MATCHING LETTERS ----
@@ -668,10 +1008,10 @@ var newsPage = (function () {
                         result.appendChild(resultDateElement);
 
                         // ---- GET UNIQUE ID NUMBER FOR THIS SPECIFIC TARGET ----
-                        uniqueID = allNewsContent[i].uniqueID;
+                        uniqueID = arrayToQuery[i].uniqueID;
 
                         // ---- ADD CLICK EVENT LISTENER TO THE RESULT ----
-                        result.addEventListener("click", function (event) {
+                        result.addEventListener("click", function(event) {
 
                             // Set the hidden value as the value in the inputfield
                             let searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
@@ -692,10 +1032,114 @@ var newsPage = (function () {
         },
 
         /**
+         * CLEAR SEARCH FIELD
+         */
+        clearSearch: function() {
+            document.querySelector(`#${DEFAULTS.searchFieldID}`).value = "";
+            // remove the dropdown
+            // Switch the icons
+            document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "block";
+            document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "none";
+            this.removeSearchResults();
+        },
+
+        /**
+         * RESET THE SELECTOR FIELD TO DEFAULT STATE
+         */
+        resetModalFilter: function() {
+            let selector;
+            selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
+
+            // Set the selected option as the first option
+            selector.selectedIndex = 0;
+
+            // Clear the search field
+            newsPage.clearSearch();
+
+            // Call the apply filter function, since selection is changed
+            newsPage.applyFilter(selector.value);
+        },
+
+        /**
+         * APPLIES FILTER BASED ON SELECTION IN THE SELECTOR ELEMENT IN MODAL
+         */
+        applyFilter: function(criteria) {
+            let tag, // Keyword is what is searched for among all table data
+                allNewsContentLenght,
+                filteredTableDataLenght,
+                reset = false, // Determines whether filtered array should be reset to default
+                searchField;
+
+            // Reset array of filtered table data
+            filteredTableData = [];
+
+            if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromSU.toUpperCase())) {
+                tag = DEFAULTS.newsTagOptions.ifSUsetTag;
+            } else if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromBOQ.toUpperCase())) {
+                tag = DEFAULTS.newsTagOptions.ifBOQsetTag;
+            } else {
+                // Reset filtered array data, if no criteria is matching
+                filteredTableData = allNewsContent;
+                reset = true;
+            }
+
+            // ---- APPLY THE FILTER, IF CRITERIA IS UPDATED ----
+            if (!reset) {
+                allNewsContentLenght = allNewsContent.length;
+                for (let i = 0; i < allNewsContentLenght; i++) {
+                    // Check if author of news includes the keyword
+                    // Refractor - should check the tag
+                    if (allNewsContent[i].tag.includes(`${tag}`)) {
+                        // Push it to the array of filtered data 
+                        filteredTableData.push(allNewsContent[i]);
+                    }
+                }
+            }
+
+            // ---- REMOVE ELEMENTS BEFORE APPLYING FILTER ----
+            this.clearPage();
+
+            filteredTableDataLenght = filteredTableData.length;
+            for (let i = 0; i < filteredTableDataLenght; i++) {
+                let dataObject = filteredTableData[i];
+                this.createHTMLBlock(dataObject);
+            }
+
+            // ---- CHECK FOR VALUE IN SEARCH FIELD ----
+            // And search again if there was a value
+            searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
+            if (searchField.value) {
+                // Save the value
+                let value = searchField.value;
+                // Clear the searchfield to remove dropdown element
+                this.clearSearch();
+                // Set the value in the input field again
+                searchField.value = value;
+                // Call the search function with the value
+                this.search(value);
+            }
+
+            // Loop igennem alle elementer og finde de ting som matcher
+            // Lave en ny array af viste elementer (som søgefeltet skal bruge)
+        },
+
+        /**
+         * REMOVE ALL NEWS ELEMENTS IN THE WRAPPER IN MODAL
+         */
+        clearPage: function() {
+            let page;
+
+            page = elements.newsSectionWrapper;
+            while (page.firstChild) {
+                page.removeChild(page.firstChild)
+            }
+        },
+
+        /**
          * SCROLL TO ELEMENT IN THE PAGE
          * @param {string} uniqueID Element ID for which the page shall scroll to view
          */
-        scrollToBlock: function (uniqueID) {
+        scrollToBlock: function(uniqueID) {
             let target;
 
             // ---- TARGET THE ELEMENT WITH THE ID ----
@@ -703,11 +1147,12 @@ var newsPage = (function () {
 
             // ---- TRY SMOOTH SCROLLING, OR USE OTHER METHOD FOR EDGE/IE ----
             try {
-                target.scrollIntoView({ behavior: "smooth" });
-            }
-            catch (error) {
+                //target.scrollIntoView({ behavior: "smooth" });
+                // Gone with this one instead, since for edge scrollIntoView options in not supported
+                target.parentNode.scrollTop = target.offsetTop - 70;
+            } catch (error) {
                 console.log(error);
-                target.parentNode.scrollTop = target.offsetTop - 30;
+                //target.parentNode.scrollTop = target.offsetTop - 70;
             }
 
             // ---- HIGHLIGHT OR ANIMATE ELEMENT ----
@@ -722,7 +1167,7 @@ var newsPage = (function () {
         /**
          * REMOVE SEARCH RESULTS CONTAINER
          */
-        removeSearchResults: function () {
+        removeSearchResults: function() {
             if (document.querySelector(`#${DEFAULTS.resultsContainerID}`)) {
                 var target;
                 target = document.querySelector(`#${DEFAULTS.resultsContainerID}`);
@@ -734,15 +1179,15 @@ var newsPage = (function () {
          * WILL GENERATE A NEW MODAL ELEMENT AND DISPLAY IT
          * @param {string} imgSrc file source of image which was clicked
          */
-        openNewsModal: function (imgSrc) {
+        openNewsModal: function(imgSrc) {
             var modal;
 
             // ---- MAKE NEW MODAL ELEMENT ----
             modal = new this.Modal(
-                classNames.modal.mainClass,     // modal classname
-                classNames.modal.closeButton,   // close button classname
-                classNames.modal.modalContent,  // img classname
-                imgSrc                          // img src (comes as parameter)
+                classNames.modal.mainClass, // modal classname
+                classNames.modal.closeButton, // close button classname
+                classNames.modal.modalContent, // img classname
+                imgSrc // img src (comes as parameter)
             ).createModal();
             // Place it inside the body
             document.body.appendChild(modal);
@@ -756,7 +1201,7 @@ var newsPage = (function () {
          * CLOSE MODAL BY REMOVING ELEMENT
          * @param {element} target The element which should be removed
          */
-        closeNewsModal: function (target) {
+        closeNewsModal: function(target) {
             target.remove();
         },
 
@@ -768,13 +1213,13 @@ var newsPage = (function () {
          * @param {string} modalImgClass ClassName of the image (content inside modal)
          * @param {string} modalImgSrc Src to the image displaying inside the modal
          */
-        Modal: function (modalClass, closeBtnClass, modalImgClass, modalImgSrc) {
+        Modal: function(modalClass, closeBtnClass, modalImgClass, modalImgSrc) {
             this.modalClass = modalClass;
             this.closeBtnClass = closeBtnClass;
             this.modalImgClass = modalImgClass;
             this.modalImgSrc = modalImgSrc;
 
-            this.createModal = function () {
+            this.createModal = function() {
                 var modal = document.createElement("DIV");
                 modal.className = modalClass;
 
@@ -783,7 +1228,7 @@ var newsPage = (function () {
                 close.className = closeBtnClass;
                 close.innerHTML = "&times;";
                 // On click event closing the modal
-                close.addEventListener("click", function () {
+                close.addEventListener("click", function() {
                     newsPage.closeNewsModal(modal);
                 });
 
@@ -803,14 +1248,14 @@ var newsPage = (function () {
          * @constructor
          * @param {Object} params Property object for the HTML element: tag, class, id, imageSrc, innerHTML
          */
-        Template: function (params) {
+        Template: function(params) {
             this.elementTag = params.tag;
             this.elementClass = params.class;
             this.elementId = params.id;
             this.imageSrc = params.imageSrc;
             this.innerHTML = params.innerHTML;
 
-            this.create = function () {
+            this.create = function() {
                 let htmlElement;
                 if (this.elementTag) {
                     htmlElement = document.createElement(this.elementTag);
@@ -834,6 +1279,3 @@ var newsPage = (function () {
         }
     };
 }());
-
-// Allow time for all tables to load before calling first function
-setTimeout(function(){newsPage.fetchNotificationTables()},50);
