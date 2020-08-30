@@ -1,6 +1,6 @@
 var newsPage = (function () {
     "use strict";
-    
+
     // ---------------------- TO DO's ----------------------
     // Make all content visible in the search field - use search field from store finder
     // If link in tabel does not contain http or https in front, then insert it (make it a href if its not)
@@ -128,8 +128,12 @@ var newsPage = (function () {
             if (DEFAULTS.developerMode == true) {
                 tableNodeList = document.querySelectorAll("table");
             } else {
-                console.log(DEFAULTS.notificationTableClass);
                 tableNodeList = document.querySelectorAll(`.${DEFAULTS.notificationTableClass}`);
+
+                if (tableNodeList.length == 0) {
+                    console.log("News has not been loaded. Will redirect to homepage");
+                }
+
             }
 
             // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
@@ -142,8 +146,8 @@ var newsPage = (function () {
             // ---- DISPLAY THE PAGE INSIDE THE WRAPPER ----
             // Wrapper content is not displayed inside the editor interface
             // Is hidden with CSS as default, since scripts is not loaded in the humany editor
-            overAllPageWrapper = document.querySelector(`#${DEFAULTS.overAllPageWrapper}`);
-            overAllPageWrapper.style.display = "block";
+            //overAllPageWrapper = document.querySelector(`#${DEFAULTS.overAllPageWrapper}`);
+            //overAllPageWrapper.style.display = "block";
 
             // ---- QUERY NEWS SECTION WRAPPER ----
             // Get the news section wrapper by ID to place blocks inside
@@ -220,10 +224,10 @@ var newsPage = (function () {
                 });
             }
         },
-        
+
         fetchNotificationTables: function () {
             var modalImgs, imgCount, tableNodeList, tableNodeListLenght, overAllPageWrapper,
-            tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, dateString;
+                tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, dateString;
 
             // Clear global variables, since the eefe is only loaded once in humany
             // And values in the variable will be dublicated everytime user loads the humany news page
@@ -239,9 +243,7 @@ var newsPage = (function () {
                 console.log(DEFAULTS.notificationTableClass);
                 tableNodeList = document.querySelectorAll(`.${DEFAULTS.notificationTableClass}`);
             }
-            
-            console.log(DEFAULTS.notificationTableClass);
-            
+
             console.log("tableNodeList", tableNodeList);
 
             // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
@@ -297,13 +299,13 @@ var newsPage = (function () {
                 ).create();
                 newsItem.appendChild(newsHeadline);
 
-                newsDate = new this.Template(
-                    {
-                        tag: "P",
-                        class: "latestNewsDate",
-                        innerHTML: allNewsContent[i].dateString
-                    }
-                ).create();
+                    newsDate = new this.Template(
+                        {
+                            tag: "P",
+                            class: "latestNewsDate",
+                            innerHTML: allNewsContent[i].dateString
+                        }
+                    ).create();
                 newsItem.appendChild(newsDate);
             }
         },
@@ -596,7 +598,7 @@ var newsPage = (function () {
             // ---- LOOP THROUGH AND SEARCH FOR MATCH ON HEADLINE ----
             for (let i = 0; i < arrayLenght; i++) {
                 let headline, headlineLenght, author, date, queryString, queryStringLenght,
-                resultAuthorElement, resultDateElement;
+                    resultAuthorElement, resultDateElement;
 
                 // ---- GET THE HEADLINE STRING ----
                 headline = allNewsContent[i].headline;
@@ -832,3 +834,6 @@ var newsPage = (function () {
         }
     };
 }());
+
+// Allow time for all tables to load before calling first function
+setTimeout(function(){newsPage.fetchNotificationTables()},50);
