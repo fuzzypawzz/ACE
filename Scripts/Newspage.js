@@ -694,6 +694,16 @@ var newsPage = (function() {
             }
         },
 
+        createSvg: function(n, a) {
+                this.svgId = n, this.className = a,
+                    this.createSvg = function() {
+                        var e = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                        e.setAttribute("class", a);
+                        var t = document.createElementNS("http://www.w3.org/2000/svg", "use");
+                        return t.setAttributeNS(null, "href", "#".concat(n)), e.appendChild(t), e
+                    }
+            },
+
         /**
          * CREATE HTML ELEMENTS BASED ON THE DATA OBJECT AS PARAMETER
          * @param {Object} props Object containing all data needed for creating the news block
@@ -731,11 +741,11 @@ var newsPage = (function() {
             if (!props.icon) {
                 props.icon = DEFAULTS.pebble;
             }
-            logoImage = new this.Template({
-                tag: "IMG",
-                class: classNames.logoImg,
-                imageSrc: props.icon
-            }).create();
+            
+            logoImage = new this.createSvg(
+                "_teliaPebbleIcon26",
+                "newsblock-01-svg"
+            ).createSvg();
             newsBlockLogo.appendChild(logoImage);
 
             // ---- THE INFORMATION ELEMENT (for author name and date) ----
