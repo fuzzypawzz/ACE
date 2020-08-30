@@ -46,7 +46,7 @@ var newsPage = (function() {
 
     const DEFAULTS = {
         developerMode: false, // Turn on for developer mode (local env)
-        humanyInterfaceName: "test-miljo",
+        humanyInterfaceName: "tjekit-all-brands",
         guideIDSToFetch: ["11747", "12076"],
         timesToRetryFetchingTableData: 10, // Humany tables loads slow, set the retry amount before timing out
         pebble: "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png", // Default pebble icon file path
