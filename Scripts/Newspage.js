@@ -47,6 +47,7 @@ var newsPage = (function() {
     const DEFAULTS = {
         developerMode: false, // Turn on for developer mode (local env)
         humanyInterfaceName: "test-miljo",
+        guideIDSToFetch: ["11747", "12076"],
         timesToRetryFetchingTableData: 10, // Humany tables loads slow, set the retry amount before timing out
         pebble: "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png", // Default pebble icon file path
         humanyGuideTarget: "h-portal-main", // Target table inside this element
@@ -212,7 +213,7 @@ var newsPage = (function() {
          */
         fetchNotificationTables: function() {
             console.log("FUNCTION LOG: fetchNotificationTables() invoked");
-            var modalImgs, imgCount, tableNodeList, tableNodeListLenght, overAllPageWrapper,
+            var modalImgs, imgCount, tableNodeList = [], tableNodeListLenght, overAllPageWrapper,
                 tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, dateString;
 
             // Clear global variables, since the eefe is only loaded once in humany
@@ -226,7 +227,28 @@ var newsPage = (function() {
             if (DEFAULTS.developerMode == true) {
                 tableNodeList = document.querySelectorAll("table");
             } else {
-                tableNodeList = document.querySelectorAll(`.${DEFAULTS.notificationTableClass}`);
+                DEFAULTS.guideIDSToFetch.forEach(guideID => {
+                    let fetchedJSON, bodyOfGuide, htmlContainer, table;
+                    var requestURL = `https://telia-dk.humany.net/test-miljo/guides/${guideID}?language=da&credentials=true`;
+                    let request = new XMLHttpRequest();
+                    request.onreadystatechange = function () {
+                        if (this.readyState == 4 && this.status == 200) {
+                            // Parse response to JSON
+                            fetchedJSON = JSON.parse(request.responseText);
+                            // Get the guide BODY from the JSON
+                            bodyOfGuide = fetchedJSON.Body;
+                            // Create placeholder html element with the body
+                            htmlContainer = document.createElement("DIV");
+                            htmlContainer.innerHTML = bodyOfGuide;
+                            // Get the table only
+                            table = htmlContainer.querySelector(".humany-notify-table");
+                            // Push table to the array
+                            tableNodeList.push(table);
+                        }
+                    };
+                    request.open("GET", requestURL, false);
+                    request.send();
+                });
             }
 
             // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
@@ -398,43 +420,56 @@ var newsPage = (function() {
              */
             let removeEmptyValues = function(value, key) {
                 // ---- CHECK IF STRING VALUE MEANS EMPTY ----
-                if (value.includes(DEFAULTS.humanyNothing)) {
-                    // Replace rubbish
-                    value = value.replace(/&nbsp;/g, "");
+
+                try {
+
+                    if (value.includes(DEFAULTS.humanyNothing)) {
+                        // Replace rubbish
+                        value = value.replace(/&nbsp;/g, "");
+                    }
+
+                } catch (err) {
+                    console.log(err);
                 }
 
                 // Check if its not the field "contentText", which is allowed to contain
                 // html tags and such, since it is the text area in the article
-                if (key == DEFAULTS.isAllowedToContainHTMLtags == false) {
-                    // Remove paragraphs
-                    if (value.includes("<p>")) {
-                        let replacement = value.replace(/<p>/g, "");
-                        replacement = replacement.replace(/<\/p>/g, "");
-                        value = replacement;
+                try {
+                    if (key == DEFAULTS.isAllowedToContainHTMLtags == false) {
+                        // Remove paragraphs
+                        if (value.includes("<p>")) {
+                            let replacement = value.replace(/<p>/g, "");
+                            replacement = replacement.replace(/<\/p>/g, "");
+                            value = replacement;
+                        }
+                        // Remove div tags
+                        if (value.includes("<div>")) {
+                            let replacement = value.replace(/<div>/g, "");
+                            replacement = replacement.replace(/<\/div>/g, "");
+                            value = replacement;
+                        }
+                        // Remove linebreaks
+                        if (value.includes("<br>")) {
+                            let replacement = value.replace(/<br>/g, " ");
+                            replacement = replacement.replace(/<\/br>/g, " ");
+                            value = replacement;
+                        }
+                        // Remove links and only keep the URL
+                        // if (value.includes("<a href")) {
+                        //     let replacement = value.replace(/<a\b[^>]*>/i, "").replace(/<\/a>/i, "");
+                        //     value = replacement;
+                        // }
+                        // Remove 0 if its the first char
+                        if (value.slice(0, 1) == "0") {
+                            let replacement = value.replace(/^0+/, '');
+                            value = replacement;
+                        }
                     }
-                    // Remove div tags
-                    if (value.includes("<div>")) {
-                        let replacement = value.replace(/<div>/g, "");
-                        replacement = replacement.replace(/<\/div>/g, "");
-                        value = replacement;
-                    }
-                    // Remove linebreaks
-                    if (value.includes("<br>")) {
-                        let replacement = value.replace(/<br>/g, " ");
-                        replacement = replacement.replace(/<\/br>/g, " ");
-                        value = replacement;
-                    }
-                    // Remove links and only keep the URL
-                    // if (value.includes("<a href")) {
-                    //     let replacement = value.replace(/<a\b[^>]*>/i, "").replace(/<\/a>/i, "");
-                    //     value = replacement;
-                    // }
-                    // Remove 0 if its the first char
-                    if (value.slice(0, 1) == "0") {
-                        let replacement = value.replace(/^0+/, '');
-                        value = replacement;
-                    }
+                } catch (err) {
+                    console.log(err);
                 }
+
+
                 return value;
             };
 
@@ -583,7 +618,7 @@ var newsPage = (function() {
             for (i = 0; i < objLenght; i++) {
                 let newsData = {};
                 let day, month, rawMonth, monthInEnglish, monthInDanish, year, author, icon;
-                let headline, innerHTML, image, link, linkText;
+                let headline, innerHTML, image, link;
                 let isTagged = false;
 
                 // ---- TRIM AND CREATE DATES ----
@@ -653,7 +688,6 @@ var newsPage = (function() {
                 newsData.innerHTML = getData(i, "contentText").trim();
                 newsData.image = getData(i, "img").trim();
                 newsData.link = getData(i, "href").trim();
-                newsData.linkText = getData(i, "linkText").trim();
 
                 // ---- ASSIGN UNIQUE ID ----
                 newsData.uniqueID = `news_${uniqueNumber}`;
@@ -1279,3 +1313,40 @@ var newsPage = (function() {
         }
     };
 }());
+
+var triggers = function() {
+        var e, n = "tjekit-all-brands",
+            a = {
+                newsLoadError: "Nyhederne blev ikke indlæst. Genindlæser siden."
+            },
+            r = {
+                customNewsModal: "#_custom-newspage-modal",
+                customNewsModalClose: "#_custom-newspage-modal-closebtn",
+                panelSearchButton: "#_panel-btn-search",
+                newsSectionWrapper: "#_newsSection-wrapper"
+            };
+        try {
+            e = document.querySelector(r.customNewsModal)
+        } catch (e) {
+            console
+                .error("News modal element could not be found", e), console.log("Check that the ID of the modal has not changed"), console.log("Check that the ID of the close button in the modal has not changed")
+        }
+        return document.querySelector(r.panelSearchButton).addEventListener("click", function() {
+            var e = document.querySelector(r.newsSectionWrapper);
+            if (e.firstChild) triggers.toggleNewsModal();
+            else {
+                var t = document.createElement("H3");
+                t.innerHTML = a.newsLoadError, e.appendChild(t), triggers.toggleNewsModal(), setTimeout(function() {
+                    window.location.href = "https://telia-dk.humany.net/".concat(n, "/")
+                }, 1e3)
+            }
+        }), document.querySelector(r.customNewsModalClose).addEventListener("click", function() {
+            triggers.toggleNewsModal(), newsPage.resetModalFilter()
+        }), {
+            toggleNewsModal: function() {
+                "none" == e.style.display ? e.style.display = "block" : "block" == e.style.display && (e.style.display = "none")
+            }
+        }
+    }();
+
+setTimeout(function(){newsPage.fetchNotificationTables()},50);
