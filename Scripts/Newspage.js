@@ -47,7 +47,7 @@ var newsPage = (function() {
     const DEFAULTS = {
         developerMode: false, // Turn on for developer mode (local env)
         humanyInterfaceName: "tjekit-all-brands",
-        guideIDSToFetch: ["11747", "12076"],
+        guideIDSToFetch: ["11747", "12076", "13654"],
         timesToRetryFetchingTableData: 10, // Humany tables loads slow, set the retry amount before timing out
         pebble: "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png", // Default pebble icon file path
         humanyGuideTarget: "h-portal-main", // Target table inside this element
@@ -63,24 +63,50 @@ var newsPage = (function() {
         searchDeleteIconID: "_humany-delete-ts-icon", // ID of the modal search field search svg
         searchNothingFoundText: "Der blev ikke fundet noget!",
         selectorFieldID: "_news-month-selector",
-        author: "BUSINESS QUALITY AND OPTIMIZATION", // Default author name, if not specified
+        author: "REDAKTØREN", // Default author name, if not specified
         noTableFoundMsg: "Fejl: Der blev ikke fundet en tabel med data",
         moreThanOneTableMsg: "Fejl: Der er fundet mere end 1 tabel med data. Der må kun være 1 tabel på siden",
         ifNoLinkText: "Åben link", // Will be used if editor didnt give a link button a text/name
         humanyNothing: "&nbsp;", // Means nothing in Humany editor language
         isAllowedToContainHTMLtags: "contentText", // One paramter which is allowed to have paragraphs/divs inside
-        SelectorOptions: { // Options for the selector field in the modal
+        SelectorOptions: { // Options for the selector field in the modal - remember to map in setupSelector()
             showAll: "Se alle nyheder",
             onlyNewsFromSU: "Kun udmeldinger fra SU",
-            onlyNewsFromBOQ: "Kun nyheder om kunde pains"
+            onlyNewsFromBOQ: "Kun nyheder om kunde pains",
+            onlyNewsFromVIP: "Kun nyheder fra VIP"
         },
         newsTagOptions: {
             isSU: ["SU", "S U", "S.U", "S. U", "SUPERUSER", "SUPER", "USER", "BRUGER"], // Determines that it is SU, if any of these is matching
             isBusinessQuality: ["BOQ", "QUALITY", "BUSINESS", "OPTIMI", "ZATION", "PAIN", "LØST"], // Determines that it is BOQ, if any of these is mathing
+            isVIP: ["VIP", "ENTERPRISE", "VIP TEAM"],
             ifSUsetTag: "SU", // Sets this as tag if article is made by SU
-            ifBOQsetTag: "BUSINESS QUALITY AND OPTIMIZATION" // Sets this as tag if article is made by BOQ
+            ifBOQsetTag: "BUSINESS QUALITY AND OPTIMIZATION", // Sets this as tag if article is made by BOQ
+            ifVIPsetTag: "VIP" // Sets this as tag if article is made by VIP TEAM
         }
     };
+
+    function segmentProvider () {
+        let defaultSegment = 1;
+        let vipSegment = 2;
+
+        if (window.location.href.toUpperCase().includes("VIP")) {
+            return vipSegment;
+        } else {
+            return defaultSegment;
+        }
+    }
+
+    const guideIDSToFetch = [];
+
+    const segment = segmentProvider();
+
+    if (window.location.href.toUpperCase().includes("VIP")) {
+        // Target only these news guides for VIP
+        guideIDSToFetch.push("13654");
+    } else {
+        // Else target all - for CO portals
+        guideIDSToFetch.push("11747", "12076");
+    }
 
     // ---- CSS CLASSES ----
     const classNames = {
@@ -223,7 +249,7 @@ var newsPage = (function() {
             if (DEFAULTS.developerMode == true) {
                 tableNodeList = document.querySelectorAll("table");
             } else {
-                DEFAULTS.guideIDSToFetch.forEach(guideID => {
+                guideIDSToFetch.forEach(guideID => {
                     let fetchedJSON, bodyOfGuide, htmlContainer, table;
                     var requestURL = `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/guides/${guideID}?language=da&credentials=true`;
                     let request = new XMLHttpRequest();
@@ -249,6 +275,7 @@ var newsPage = (function() {
 
             // ---- HIDE ALL TABLES INSIDE THE HUMANY GUIDE ----
             // The table is only applicable in the editor interface
+            // .humany-notify-table
             tableNodeListLenght = tableNodeList.length;
             for (let i = 0; i < tableNodeListLenght; i++) {
                 tableNodeList[i].style.display = "none";
@@ -287,7 +314,13 @@ var newsPage = (function() {
 
             // ---- CREATE NEWS ELEMENTS IN THE TOP-10 BLOCK ----
             allNewsContentLenght = allNewsContent.length;
-            for (let i = 0; i < 9; i++) {
+            let maxNumberOfItemsForSidePanel = 10;
+
+            // Check if news items is less than the max number of items allowed in the sidepanel
+            if (allNewsContentLenght < maxNumberOfItemsForSidePanel) {
+                maxNumberOfItemsForSidePanel = allNewsContentLenght;
+            }
+            for (let i = 0; i < maxNumberOfItemsForSidePanel; i++) {
                 let newsItem, newsHeadline, newsHeadlineIcon, newsDate, iconClass;
 
                 // ---- CONTAINER FOR HEADLINE AND DATE ----
@@ -668,6 +701,16 @@ var newsPage = (function() {
                     });
                 }
 
+                // ---- TRY TO TAG AS AN VIP TEAM ARTICLE ----
+                if (!isTagged) {
+                    DEFAULTS.newsTagOptions.isVIP.forEach(tag => {
+                        if (newsData.author.includes(tag)) {
+                            newsData.tag = DEFAULTS.newsTagOptions.ifVIPsetTag;
+                            isTagged = true;
+                        }
+                    })
+                }
+
                 if (!isTagged) {
                     newsData.tag = "DEFAULT";
                     isTagged = true;
@@ -923,9 +966,37 @@ var newsPage = (function() {
          * WILL SETUP THE SELECTOR FIELD IN THE MODAL
          */
         setupSelector: function() {
-            let option, selector, objectLength;
+            let options = [], option, selector, objectLength;
             selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
 
+            // Only display the options which is relevant for the segment
+            // TODO: Refractor this (august 2020)
+            switch (segment) {
+                // VIP
+                case 2:
+                    options.push(DEFAULTS.SelectorOptions.onlyNewsFromVIP);
+                    break;
+                // Currently anything else = CO
+                default:
+                    options.push(
+                        DEFAULTS.SelectorOptions.showAll,
+                        DEFAULTS.SelectorOptions.onlyNewsFromBOQ,
+                        DEFAULTS.SelectorOptions.onlyNewsFromSU
+                    );
+                    break;
+            }
+
+            options.forEach(item => {
+                option = new this.Template({
+                    tag: "OPTION",
+                    class: "",
+                    id: "",
+                    innerHTML: item
+                }).create();
+                selector.appendChild(option);
+            });
+
+            /*
             Object.keys(DEFAULTS.SelectorOptions).forEach(key => {
                 option = new this.Template({
                     tag: "OPTION",
@@ -935,6 +1006,7 @@ var newsPage = (function() {
                 }).create();
                 selector.appendChild(option);
             });
+            */
 
             // ---- WHEN SELECTOR CHANGES, CALL APPLY FILTER FUNCTION ----
             selector.addEventListener("change", function(event) {
@@ -1114,6 +1186,8 @@ var newsPage = (function() {
                 tag = DEFAULTS.newsTagOptions.ifSUsetTag;
             } else if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromBOQ.toUpperCase())) {
                 tag = DEFAULTS.newsTagOptions.ifBOQsetTag;
+            } else if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromVIP.toUpperCase())) {
+                tag = DEFAULTS.newsTagOptions.ifVIPsetTag;
             } else {
                 // Reset filtered array data, if no criteria is matching
                 filteredTableData = allNewsContent;
