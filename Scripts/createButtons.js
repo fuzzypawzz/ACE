@@ -28,13 +28,40 @@ var createButtons = (function () {
     };
 
     const DEFAULTS = {
-        humanyInterfaceName: "tjekit-all-brands",
         bookmarkCookies: [],
         bookmarkElements: [],
         buttonsArray: [],
         hasNoBookmarks: false,
         noBookmarksText: "Du har ingen favoritter"
     };
+
+    function segmentProvider () {
+        let defaultSegment = 1;
+        let vipSegment = 2;
+
+        if (window.location.href.toUpperCase().includes("VIP")) {
+            return vipSegment;
+        } else {
+            return defaultSegment;
+        }
+    }
+
+    function returnInterfaceName (segment) {
+        switch (segment) {
+            case 2:
+                return "vip";
+                break;
+            case 1:
+                return "tjekit-all-brands"
+            default:
+                return "tjekit-all-brands"
+                break;
+        }
+    }
+
+    const segment = segmentProvider();
+
+    const humanyInterfaceName = returnInterfaceName(segment);
 
     return {
         initiate: function () {
@@ -325,7 +352,7 @@ var createButtons = (function () {
                     var link, guide, guideName, getGuide, getGuideURL;
                     // Push bookmarks to compare array
                     DEFAULTS.bookmarkCookies.push(id);
-                    getGuideURL = `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/guides/${id}?language=da&credentials=true`;
+                    getGuideURL = `https://telia-dk.humany.net/${humanyInterfaceName}/guides/${id}?language=da&credentials=true`;
                     getGuide = new XMLHttpRequest();
                     getGuide.onreadystatechange = function () {
                         if (this.readyState == 4 && this.status == 200) {
@@ -335,7 +362,7 @@ var createButtons = (function () {
                             link = new createButtons.CreateBtn({
                                 descr: guideName,
                                 icon: "fa fa-star",
-                                url: `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/${guideName}/${id}`,
+                                url: `https://telia-dk.humany.net/${humanyInterfaceName}/${guideName}/${id}`,
                                 tag: "A",
                                 openInNewTab: false
                             }).create();
