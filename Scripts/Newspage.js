@@ -737,6 +737,15 @@ var newsPage = (function() {
             }
         },
 
+        removeTag: function(e) {
+                if (!e.tag && !e.str) return "Must include both tag(tag) and string(str)";
+                switch (e.tag.toUpperCase()) {
+                    case "A":
+                        e.str = e.str.replace(/<a\b[^>]*>/i, "").replace(/<\/a>/i, "")
+                }
+                return e.str
+            },
+
         createSvg: function(n, a) {
                 this.svgId = n, this.className = a,
                     this.createSvg = function() {
@@ -862,11 +871,23 @@ var newsPage = (function() {
                 newsBlockWrapper.appendChild(photosElement);
 
                 // ---- THE IMAGE TAG ----
-                photo = new this.Template({
-                    tag: "IMG",
-                    class: classNames.image,
-                    imageSrc: props.image
-                }).create();
+                if (props.image.toUpperCase().includes("<IMG")) {
+                    photo = new this.Template({
+                        tag: "DIV"
+                    }).create();
+                    photo.innerHTML = props.image;
+                } else {
+                    // Remove the A tag and returns a string
+                    let imageAsString = this.removeTag({
+                        tag: "A",
+                        str: props.image
+                    });
+                    photo = new this.Template({
+                        tag: "IMG",
+                        class: classNames.image,
+                        imageSrc: imageAsString
+                    }).create();
+                }
 
                 // Add click event listener to the image,
                 // To display modal with image when user clicks
@@ -874,7 +895,11 @@ var newsPage = (function() {
                     newsPage.openNewsModal(this.src);
                 });
 
-                photosElement.appendChild(photo);
+                try {
+                    photosElement.appendChild(photo);
+                } catch (err) {
+                    console.log("Could not attach image, got this error: ", err)
+                }
             }
 
             // ---- REFERENCES SECTION (for links/buttons) ----
