@@ -903,12 +903,6 @@ var newsPage = (function() {
                     }).create();
                 }
 
-                // Add click event listener to the image,
-                // To display modal with image when user clicks
-                photo.addEventListener("click", function(event) {
-                    newsPage.openNewsModal(this.src);
-                });
-
                 try {
                     photosElement.appendChild(photo);
                 } catch (err) {
@@ -997,6 +991,15 @@ var newsPage = (function() {
 
                 // referenceElement.appendChild(linkButton);
             }
+
+            // Add click event listener to the images,
+            // To display modal with image when user clicks
+            let allImages = newsBlockWrapper.querySelectorAll("IMG");
+            allImages.forEach(function(image) {
+                image.addEventListener("click", function(event) {
+                    newsPage.openNewsModal(this.src)
+                });
+            });
 
             blocks.push(newsBlockWrapper);
         },
