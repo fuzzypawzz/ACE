@@ -680,7 +680,21 @@ var newsPage = (function() {
                 newsData.author = getData(i, "author").trim().toUpperCase();
                 // Give author default value if nothing is specified by user
                 if (!newsData.author) {
-                    newsData.author = DEFAULTS.author;
+                    let segmentSpecificAuthorName;
+
+                    switch (segment) {
+                        // VIP
+                        case 2:
+                            segmentSpecificAuthorName = DEFAULTS.newsTagOptions.isVIP[0];
+                            break;
+                        // CO
+                        case 1:
+                            segmentSpecificAuthorName = DEFAULTS.newsTagOptions.isSU[0];
+                        default:
+                            segmentSpecificAuthorName = DEFAULTS.author;
+                            break;
+                    }
+                    newsData.author = segmentSpecificAuthorName;
                 }
 
                 // ---- TRY TO TAG AS SUPER USER (SU) ARTICLE ----
