@@ -91,11 +91,21 @@ var createButtons = (function () {
             favoritesBtn = document.querySelector(`#${classAndIds.favoritesBtn.id}`);
             favoritesBtn.appendChild(favoriteDropdown);
 
+            // Add event listener to favorites button
+            favoritesBtn.addEventListener("mouseenter", function () {
+                // REFRACTOR - DOING THIS FUNCTION MULTIPLE TIMES, IS THAT REALLY NEEDED
+                let updatedBookmarks = createButtons.isCookiesUpdated();
+                if (updatedBookmarks) {
+                    createButtons.addGuideFavorites(updatedBookmarks);
+                }
+            });
+
             // Add bookmark favorites to the element
             // if there is no bookmarks, nothing will be added
             //this.addGuideFavorites();
 
             // Check if bookmarks has been updated
+            // Maybe its enough just to do it when user interacts with the field (mouseenter event above)
             updatedBookmarks = this.isCookiesUpdated();
             if (updatedBookmarks) {
                 this.addGuideFavorites(updatedBookmarks);
@@ -176,15 +186,6 @@ var createButtons = (function () {
                         }
                     ).create();
                     dropdownBtns.appendChild(btn);
-                }
-            });
-
-            // Add event listener to favorites button
-            favoritesBtn.addEventListener("mouseenter", function () {
-                // REFRACTOR - DOING THIS FUNCTION MULTIPLE TIMES, IS THAT REALLY NEEDED
-                var updatedBookmarks = createButtons.isCookiesUpdated();
-                if (updatedBookmarks) {
-                    createButtons.addGuideFavorites(updatedBookmarks);
                 }
             });
         },
@@ -382,8 +383,6 @@ var createButtons = (function () {
             DEFAULTS.bookmarkElements.forEach(link => {
                 favoriteDropdown.appendChild(link);
             });
-
-            // loadingMsg.remove();
         },
 
         displayDropdownMessage: function (messageText) {
