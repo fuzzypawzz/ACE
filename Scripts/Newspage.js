@@ -934,12 +934,14 @@ var newsPage = (function() {
                     // Give it the class for link buttons
                     link.className = classNames.linkButton;
 
+                    // Refractor this so its more readable
+                    // Make a variable or function "isLinkToHumanyGuide"
                     if (link.href.toLowerCase().includes("http") == false) {
                         // If it does not contain http, its most likely a link to a humany guide
                         link.addEventListener("click", function(event) {
                             // Close and reset modal
                             triggers.toggleNewsModal();
-                            newsPage.resetModalFilter();
+                            newsPage.clearSearch();
                         });
                     } else {
                         // Make sure it opens in a new tab or window
@@ -948,51 +950,7 @@ var newsPage = (function() {
 
                     // Place it inside the reference section in the block
                     referenceElement.appendChild(link);
-
                 });
-
-                // ---- THE BUTTON WITH A CLICK LISTENER TO URL ----
-                // Create button with default textlabel, if nothing is defined
-                // if (!props.linkText) { props.linkText = DEFAULTS.ifNoLinkText; }
-                // linkButton = new this.Template(
-                //     {
-                //         tag: "A",
-                //         class: classNames.linkButton,
-                //         innerHTML: props.linkText
-                //     }
-                // ).create();
-
-                // Add /[interfaceName]/ to the link, only if it does not contain http
-                // if (props.link.toLowerCase().includes("http") == false) {
-                //     // And then, if user already included the interfaceName in the link
-                //     if (props.link.toLowerCase().includes(DEFAULTS.humanyInterfaceName)) {
-                //         // Dont include interface name
-                //         linkButton.href = `/${props.link}`;
-                //     } else {
-                //         // Include interfacename if not specified in the link
-                //         linkButton.href = `/${DEFAULTS.humanyInterfaceName}/${props.link}`;
-                //     }
-                //     // These are not opening in new tabs, so add listener to close modal on click
-                //     linkButton.addEventListener("click", function (event) {
-                //         // Close the modal when directing to guide inside humany
-                //         triggers.toggleNewsModal();
-                //         // Reset modal search and filter, since modal is closing
-                //         newsPage.resetModalFilter();
-                //     });
-                // } else {
-                //     linkButton.href = props.link;
-                //     // The target should be new tab or window (depending on browser preference)
-                //     linkButton.target = "_blank";
-                // }
-                // // Close modal when a button link is clicked
-                // // linkButton.addEventListener("click", function (event) {
-                // //     // Close the modal when directing to guide inside humany
-                // //     triggers.toggleNewsModal();
-                // //     // Reset modal search and filter, since modal is closing
-                // //     newsPage.resetModalFilter();
-                // // });
-
-                // referenceElement.appendChild(linkButton);
             }
 
             // Add click event listener to the images,
@@ -1195,23 +1153,6 @@ var newsPage = (function() {
             document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "block";
             document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "none";
             this.removeSearchResults();
-        },
-
-        /**
-         * RESET THE SELECTOR FIELD TO DEFAULT STATE
-         */
-        resetModalFilter: function() {
-            let selector;
-            selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
-
-            // Set the selected option as the first option
-            selector.selectedIndex = 0;
-
-            // Clear the search field
-            newsPage.clearSearch();
-
-            // Call the apply filter function, since selection is changed
-            newsPage.applyFilter(selector.value);
         },
 
         /**
@@ -1463,7 +1404,7 @@ var triggers = function() {
                 }, 1e3)
             }
         }), document.querySelector(r.customNewsModalClose).addEventListener("click", function() {
-            triggers.toggleNewsModal(), newsPage.resetModalFilter()
+            triggers.toggleNewsModal(), newsPage.clearSearch()
         }), {
             toggleNewsModal: function() {
                 "none" == e.style.display ? e.style.display = "block" : "block" == e.style.display && (e.style.display = "none")
