@@ -32,15 +32,15 @@ var newsPage = (function() {
     // ---- TRANSLATIONS OF KEYS ----
     // Change here, if changed in the table by user
     const tableKeyNames = {
-        day: "dag", // Creation DAY of the article
-        month: "måned", // Same as above, but MONTH
-        year: "år", // Same as above, but YEAR
-        author: "afsender", // The writers name, next to the pebble icon
+        day: "table_dag", // Creation DAY of the article
+        month: "table_maaned", // Same as above, but MONTH
+        year: "table_aar", // Same as above, but YEAR
+        author: "table_afsender", // The writers name, next to the pebble icon
         icon: "logo", // The pebble icon, or any other icon is specified
-        headline: "overskrift", // Headline in the content section
-        contentText: "tekst", // The actual text in the content section
-        img: "billede", // Image if applicable, click to expand
-        href: "link", // Href, humany guide or link to website
+        headline: "table_overskrift", // Headline in the content section
+        contentText: "table_tekst", // The actual text in the content section
+        img: "table_billede", // Image if applicable, click to expand
+        href: "table_link", // Href, humany guide or link to website
         linkText: "linktekst" // Label on the button which directs to the link
     };
 
@@ -416,7 +416,8 @@ var newsPage = (function() {
             // ---- GET THE INNER HTML FROM THE HEADER ROWS ----
             // And remove all whitespaces
             for (let i = 0; i < table.rows[0].cells.length; i++) {
-                headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
+                //headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
+                headers[i] = table.rows[0].cells[i].id.toLowerCase().replace(/ /gi, '');
             }
 
             // ---- GET INNER HTML FROM ALL ROWS, EXCLUDING THE TOP ROW (HEADERS) ----
@@ -651,7 +652,9 @@ var newsPage = (function() {
 
                 // ---- TRIM AND CREATE DATES ----
                 day = getData(i, "day").trim();
+                if (!day) { continue; }
                 rawMonth = getData(i, "month").trim();
+                if (!rawMonth) { continue; }
                 // Make sure the month is in english for creating the date object (for sorting)
                 monthInEnglish = getEnglishMonth(rawMonth);
                 // And write it correctly in danish for showing to the users
