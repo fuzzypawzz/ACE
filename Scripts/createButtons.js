@@ -28,13 +28,40 @@ var createButtons = (function () {
     };
 
     const DEFAULTS = {
-        humanyInterfaceName: "tjekit-all-brands",
         bookmarkCookies: [],
         bookmarkElements: [],
         buttonsArray: [],
         hasNoBookmarks: false,
         noBookmarksText: "Du har ingen favoritter"
     };
+
+    function segmentProvider () {
+        let defaultSegment = 1;
+        let vipSegment = 2;
+
+        if (window.location.href.toUpperCase().includes("VIP")) {
+            return vipSegment;
+        } else {
+            return defaultSegment;
+        }
+    }
+
+    function returnInterfaceName (segment) {
+        switch (segment) {
+            case 2:
+                return "vip";
+                break;
+            case 1:
+                return "tjekit-all-brands"
+            default:
+                return "tjekit-all-brands"
+                break;
+        }
+    }
+
+    const segment = segmentProvider();
+
+    const humanyInterfaceName = returnInterfaceName(segment);
 
     return {
         initiate: function () {
@@ -64,11 +91,21 @@ var createButtons = (function () {
             favoritesBtn = document.querySelector(`#${classAndIds.favoritesBtn.id}`);
             favoritesBtn.appendChild(favoriteDropdown);
 
+            // Add event listener to favorites button
+            favoritesBtn.addEventListener("mouseenter", function () {
+                // REFRACTOR - DOING THIS FUNCTION MULTIPLE TIMES, IS THAT REALLY NEEDED
+                let updatedBookmarks = createButtons.isCookiesUpdated();
+                if (updatedBookmarks) {
+                    createButtons.addGuideFavorites(updatedBookmarks);
+                }
+            });
+
             // Add bookmark favorites to the element
             // if there is no bookmarks, nothing will be added
             //this.addGuideFavorites();
 
             // Check if bookmarks has been updated
+            // Maybe its enough just to do it when user interacts with the field (mouseenter event above)
             updatedBookmarks = this.isCookiesUpdated();
             if (updatedBookmarks) {
                 this.addGuideFavorites(updatedBookmarks);
@@ -149,15 +186,6 @@ var createButtons = (function () {
                         }
                     ).create();
                     dropdownBtns.appendChild(btn);
-                }
-            });
-
-            // Add event listener to favorites button
-            favoritesBtn.addEventListener("mouseenter", function () {
-                // REFRACTOR - DOING THIS FUNCTION MULTIPLE TIMES, IS THAT REALLY NEEDED
-                var updatedBookmarks = createButtons.isCookiesUpdated();
-                if (updatedBookmarks) {
-                    createButtons.addGuideFavorites(updatedBookmarks);
                 }
             });
         },
@@ -325,7 +353,7 @@ var createButtons = (function () {
                     var link, guide, guideName, getGuide, getGuideURL;
                     // Push bookmarks to compare array
                     DEFAULTS.bookmarkCookies.push(id);
-                    getGuideURL = `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/guides/${id}?language=da&credentials=true`;
+                    getGuideURL = `https://telia-dk.humany.net/${humanyInterfaceName}/guides/${id}?language=da&credentials=true`;
                     getGuide = new XMLHttpRequest();
                     getGuide.onreadystatechange = function () {
                         if (this.readyState == 4 && this.status == 200) {
@@ -335,7 +363,7 @@ var createButtons = (function () {
                             link = new createButtons.CreateBtn({
                                 descr: guideName,
                                 icon: "fa fa-star",
-                                url: `https://telia-dk.humany.net/${DEFAULTS.humanyInterfaceName}/${guideName}/${id}`,
+                                url: `https://telia-dk.humany.net/${humanyInterfaceName}/${guideName}/${id}`,
                                 tag: "A",
                                 openInNewTab: false
                             }).create();
@@ -355,8 +383,6 @@ var createButtons = (function () {
             DEFAULTS.bookmarkElements.forEach(link => {
                 favoriteDropdown.appendChild(link);
             });
-
-            // loadingMsg.remove();
         },
 
         displayDropdownMessage: function (messageText) {
