@@ -85,29 +85,6 @@ var newsPage = (function() {
         }
     };
 
-    function segmentProvider () {
-        let defaultSegment = 1;
-        let vipSegment = 2;
-
-        if (window.location.href.toUpperCase().includes("VIP")) {
-            return vipSegment;
-        } else {
-            return defaultSegment;
-        }
-    }
-
-    const guideIDSToFetch = [];
-
-    const segment = segmentProvider();
-
-    if (window.location.href.toUpperCase().includes("VIP")) {
-        // Target only these news guides for VIP
-        guideIDSToFetch.push("13654");
-    } else {
-        // Else target all - for CO portals
-        guideIDSToFetch.push("11747", "12076");
-    }
-
     // ---- CSS CLASSES ----
     const classNames = {
         mainBlockWrapper: "newsblock-01-wrapper",
@@ -150,6 +127,36 @@ var newsPage = (function() {
         }
     };
 
+    const guideIDSToFetch = [];
+    const segment = segmentProvider();
+
+    switch (segment) {
+        // CO
+        case 1:
+            guideIDSToFetch.push("11747", "12076");
+            break;
+        // VIP
+        case 2:
+            guideIDSToFetch.push("13654");
+            break;
+        default:
+        // Fetch all, if no segment is set
+            guideIDSToFetch.push("11747", "12076", "13654");
+            break;
+    }
+
+    function segmentProvider () {
+        let defaultSegment = 1;
+        let vipSegment = 2;
+
+        if (window.location.href.toUpperCase().includes("VIP")) {
+            return vipSegment;
+        } else {
+            return defaultSegment;
+        }
+    }
+
+    // TODO: move this inside the seperate script for polyfills
     // ---- DECLARE REMOVE-METHOD IN PROTOTYPE FOR IE ----
     if (!('remove' in Element.prototype)) {
         Element.prototype.remove = function() {
@@ -159,6 +166,7 @@ var newsPage = (function() {
         };
     }
 
+    // TODO: move this inside the seperate script for polyfills
     // ---- .includes() POLYFILL for Internet Explorer and Opera ----
     if (!String.prototype.includes) {
         String.prototype.includes = function(search, start) {
@@ -179,47 +187,45 @@ var newsPage = (function() {
         console.log("Developer mode is ON, turn off before implementing this code in production");
     }
 
+    const searchIcon = document.querySelector(`#${DEFAULTS.searchIconID}`);
+    const clearSearchIcon = document.querySelector(`#${DEFAULTS.searchDeleteIconID}`);
+
     return {
-        /**
-         * INITIATER - THE START OF THE SCRIPT
-         */
         initiate: function() {
-            var modalImgs, imgCount, tableNodeList, overAllPageWrapper, deleteIcon,
-                tableJSON, newsSectionWrapper, allNewsContentLenght, searchField, tableNodeListLenght;
+            var modalImgs, imgCount, tableNodeList, 
+                overAllPageWrapper, deleteIcon,
+                tableJSON, allNewsContentLenght, 
+                tableNodeListLenght;
 
             // ---- QUERY NEWS SECTION WRAPPER ----
             // Get the news section wrapper by ID to place blocks inside
-            newsSectionWrapper = document.querySelector(`#${DEFAULTS.newsSectionWrapperID}`);
             // Place it inside the elements object for later reference
-            elements.newsSectionWrapper = newsSectionWrapper;
+            elements.newsSectionWrapper = document.querySelector(`#${DEFAULTS.newsSectionWrapperID}`);
 
             // ---- SETUP AND PREPARE SEARCH FIELD ----
-            searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
-            // Add click event listener
-            searchField.addEventListener("input", function(event) {
-                // Remove all results
-                newsPage.removeSearchResults();
+            document.querySelector(`#${DEFAULTS.searchFieldID}`)
+                .addEventListener("input", function(event) {
+                    // Remove all results
+                    newsPage.removeSearchResults();
 
-                // Don't continue if there is no value
-                if (!this.value) {
-                    // Switch the icons
-                    document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "block";
-                    document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "none";
-                    return;
-                }
-
-                // Call the search function
-                newsPage.search(this.value);
-            });
+                    if (this.value) {
+                        searchIcon.style.display = "none";
+                        clearSearchIcon.style.display = "block";
+                        newsPage.search(this.value);
+                    } else {
+                        searchIcon.style.display = "block";
+                        clearSearchIcon.style.display = "none";
+                        return;
+                    }
+                });
 
             // ---- ADD EVENT LISTENERS TO THE SEARCH DELETE ICON ----
-            deleteIcon = document.querySelector(`#${DEFAULTS.searchDeleteIconID}`);
-            deleteIcon.addEventListener("click", function(event) {
-                newsPage.clearSearch();
-            });
+            document.querySelector(`#${DEFAULTS.searchDeleteIconID}`)
+                .addEventListener("click", function(event) {
+                    newsPage.clearSearch();
+                });
 
-            // ---- SETUP SELECTOR FIELDS ----
-            this.setupSelector();
+            this.setupSelectOptions();
 
             // ---- CREATE THE HTML BLOCKS ----
             // Loop through all news objects and create blocks for each
@@ -401,7 +407,6 @@ var newsPage = (function() {
 
             // ---- CALL INITIATE TO SETUP HTML ELEMENTS AND PAGES ----
             this.initiate();
-            console.log("FUNCTION LOG: fetchNotifcationTables() is done");
         },
 
         /**
@@ -439,9 +444,8 @@ var newsPage = (function() {
          * @param {Object} data The JSON data object, the "tableJSON"
          */
         trimTableData: function(data) {
-            let objLenght, i;
-
-            objLenght = data.length;
+            let i;
+            let objLenght = data.length;
 
             /**
              * REMOVE SPECIAL CHARS WHICH MEANS NOTHING IN HUMANY
@@ -483,11 +487,7 @@ var newsPage = (function() {
                             replacement = replacement.replace(/<\/br>/g, " ");
                             value = replacement;
                         }
-                        // Remove links and only keep the URL
-                        // if (value.includes("<a href")) {
-                        //     let replacement = value.replace(/<a\b[^>]*>/i, "").replace(/<\/a>/i, "");
-                        //     value = replacement;
-                        // }
+
                         // Remove 0 if its the first char
                         if (value.slice(0, 1) == "0") {
                             let replacement = value.replace(/^0+/, '');
@@ -934,12 +934,14 @@ var newsPage = (function() {
                     // Give it the class for link buttons
                     link.className = classNames.linkButton;
 
+                    // Refractor this so its more readable
+                    // Make a variable or function "isLinkToHumanyGuide"
                     if (link.href.toLowerCase().includes("http") == false) {
                         // If it does not contain http, its most likely a link to a humany guide
                         link.addEventListener("click", function(event) {
                             // Close and reset modal
                             triggers.toggleNewsModal();
-                            newsPage.resetModalFilter();
+                            newsPage.clearSearch();
                         });
                     } else {
                         // Make sure it opens in a new tab or window
@@ -948,51 +950,7 @@ var newsPage = (function() {
 
                     // Place it inside the reference section in the block
                     referenceElement.appendChild(link);
-
                 });
-
-                // ---- THE BUTTON WITH A CLICK LISTENER TO URL ----
-                // Create button with default textlabel, if nothing is defined
-                // if (!props.linkText) { props.linkText = DEFAULTS.ifNoLinkText; }
-                // linkButton = new this.Template(
-                //     {
-                //         tag: "A",
-                //         class: classNames.linkButton,
-                //         innerHTML: props.linkText
-                //     }
-                // ).create();
-
-                // Add /[interfaceName]/ to the link, only if it does not contain http
-                // if (props.link.toLowerCase().includes("http") == false) {
-                //     // And then, if user already included the interfaceName in the link
-                //     if (props.link.toLowerCase().includes(DEFAULTS.humanyInterfaceName)) {
-                //         // Dont include interface name
-                //         linkButton.href = `/${props.link}`;
-                //     } else {
-                //         // Include interfacename if not specified in the link
-                //         linkButton.href = `/${DEFAULTS.humanyInterfaceName}/${props.link}`;
-                //     }
-                //     // These are not opening in new tabs, so add listener to close modal on click
-                //     linkButton.addEventListener("click", function (event) {
-                //         // Close the modal when directing to guide inside humany
-                //         triggers.toggleNewsModal();
-                //         // Reset modal search and filter, since modal is closing
-                //         newsPage.resetModalFilter();
-                //     });
-                // } else {
-                //     linkButton.href = props.link;
-                //     // The target should be new tab or window (depending on browser preference)
-                //     linkButton.target = "_blank";
-                // }
-                // // Close modal when a button link is clicked
-                // // linkButton.addEventListener("click", function (event) {
-                // //     // Close the modal when directing to guide inside humany
-                // //     triggers.toggleNewsModal();
-                // //     // Reset modal search and filter, since modal is closing
-                // //     newsPage.resetModalFilter();
-                // // });
-
-                // referenceElement.appendChild(linkButton);
             }
 
             // Add click event listener to the images,
@@ -1010,7 +968,7 @@ var newsPage = (function() {
         /**
          * WILL SETUP THE SELECTOR FIELD IN THE MODAL
          */
-        setupSelector: function() {
+        setupSelectOptions: function() {
             let options = [], option, selector, objectLength;
             selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
 
@@ -1040,23 +998,6 @@ var newsPage = (function() {
                 }).create();
                 selector.appendChild(option);
             });
-
-            /*
-            Object.keys(DEFAULTS.SelectorOptions).forEach(key => {
-                option = new this.Template({
-                    tag: "OPTION",
-                    class: "",
-                    id: "",
-                    innerHTML: DEFAULTS.SelectorOptions[key]
-                }).create();
-                selector.appendChild(option);
-            });
-            */
-
-            // ---- WHEN SELECTOR CHANGES, CALL APPLY FILTER FUNCTION ----
-            selector.addEventListener("change", function(event) {
-                newsPage.applyFilter(this.value);
-            });
         },
 
         /**
@@ -1082,10 +1023,6 @@ var newsPage = (function() {
                 id: DEFAULTS.resultsContainerID
             }).create();
             parentContainer.appendChild(resultsContainer);
-
-            // Switch the icons
-            document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "none";
-            document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "block";
 
             // ---- CREATE NOTHING-FOUND MESSAGE ELEMENT ----
             noResultMsg = new this.Template({
@@ -1192,103 +1129,9 @@ var newsPage = (function() {
             document.querySelector(`#${DEFAULTS.searchFieldID}`).value = "";
             // remove the dropdown
             // Switch the icons
-            document.querySelector(`#${DEFAULTS.searchIconID}`).style.display = "block";
-            document.querySelector(`#${DEFAULTS.searchDeleteIconID}`).style.display = "none";
+            searchIcon.style.display = "block";
+            clearSearchIcon.style.display = "none";
             this.removeSearchResults();
-        },
-
-        /**
-         * RESET THE SELECTOR FIELD TO DEFAULT STATE
-         */
-        resetModalFilter: function() {
-            let selector;
-            selector = document.querySelector(`#${DEFAULTS.selectorFieldID}`);
-
-            // Set the selected option as the first option
-            selector.selectedIndex = 0;
-
-            // Clear the search field
-            newsPage.clearSearch();
-
-            // Call the apply filter function, since selection is changed
-            newsPage.applyFilter(selector.value);
-        },
-
-        /**
-         * APPLIES FILTER BASED ON SELECTION IN THE SELECTOR ELEMENT IN MODAL
-         */
-        applyFilter: function(criteria) {
-            let tag, // Keyword is what is searched for among all table data
-                allNewsContentLenght,
-                filteredTableDataLenght,
-                reset = false, // Determines whether filtered array should be reset to default
-                searchField;
-
-            // Reset array of filtered table data
-            filteredTableData = [];
-
-            if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromSU.toUpperCase())) {
-                tag = DEFAULTS.newsTagOptions.ifSUsetTag;
-            } else if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromBOQ.toUpperCase())) {
-                tag = DEFAULTS.newsTagOptions.ifBOQsetTag;
-            } else if (criteria.toUpperCase().includes(DEFAULTS.SelectorOptions.onlyNewsFromVIP.toUpperCase())) {
-                tag = DEFAULTS.newsTagOptions.ifVIPsetTag;
-            } else {
-                // Reset filtered array data, if no criteria is matching
-                filteredTableData = allNewsContent;
-                reset = true;
-            }
-
-            // ---- APPLY THE FILTER, IF CRITERIA IS UPDATED ----
-            if (!reset) {
-                allNewsContentLenght = allNewsContent.length;
-                for (let i = 0; i < allNewsContentLenght; i++) {
-                    // Check if author of news includes the keyword
-                    // Refractor - should check the tag
-                    if (allNewsContent[i].tag.includes(`${tag}`)) {
-                        // Push it to the array of filtered data 
-                        filteredTableData.push(allNewsContent[i]);
-                    }
-                }
-            }
-
-            // ---- REMOVE ELEMENTS BEFORE APPLYING FILTER ----
-            this.clearPage();
-
-            filteredTableDataLenght = filteredTableData.length;
-            for (let i = 0; i < filteredTableDataLenght; i++) {
-                let dataObject = filteredTableData[i];
-                this.createHTMLBlock(dataObject);
-            }
-
-            // ---- CHECK FOR VALUE IN SEARCH FIELD ----
-            // And search again if there was a value
-            searchField = document.querySelector(`#${DEFAULTS.searchFieldID}`);
-            if (searchField.value) {
-                // Save the value
-                let value = searchField.value;
-                // Clear the searchfield to remove dropdown element
-                this.clearSearch();
-                // Set the value in the input field again
-                searchField.value = value;
-                // Call the search function with the value
-                this.search(value);
-            }
-
-            // Loop igennem alle elementer og finde de ting som matcher
-            // Lave en ny array af viste elementer (som søgefeltet skal bruge)
-        },
-
-        /**
-         * REMOVE ALL NEWS ELEMENTS IN THE WRAPPER IN MODAL
-         */
-        clearPage: function() {
-            let page;
-
-            page = elements.newsSectionWrapper;
-            while (page.firstChild) {
-                page.removeChild(page.firstChild)
-            }
         },
 
         /**
@@ -1296,28 +1139,12 @@ var newsPage = (function() {
          * @param {string} uniqueID Element ID for which the page shall scroll to view
          */
         scrollToBlock: function(uniqueID) {
-            let target;
-
-            // ---- TARGET THE ELEMENT WITH THE ID ----
-            target = document.querySelector(`#${uniqueID}`);
-
-            // ---- TRY SMOOTH SCROLLING, OR USE OTHER METHOD FOR EDGE/IE ----
+            let target = document.querySelector(`#${uniqueID}`);
             try {
-                //target.scrollIntoView({ behavior: "smooth" });
-                // Gone with this one instead, since for edge scrollIntoView options in not supported
                 target.parentNode.scrollTop = target.offsetTop - 70;
             } catch (error) {
                 console.log(error);
-                //target.parentNode.scrollTop = target.offsetTop - 70;
             }
-
-            // ---- HIGHLIGHT OR ANIMATE ELEMENT ----
-            // setTimeout(function () {
-            //     target.style.borderColor = "red";
-            // }, 600);
-            // setTimeout(function () {
-            //     target.style.borderColor = null;
-            // }, 1200);
         },
 
         /**
@@ -1463,7 +1290,7 @@ var triggers = function() {
                 }, 1e3)
             }
         }), document.querySelector(r.customNewsModalClose).addEventListener("click", function() {
-            triggers.toggleNewsModal(), newsPage.resetModalFilter()
+            triggers.toggleNewsModal(), newsPage.clearSearch()
         }), {
             toggleNewsModal: function() {
                 "none" == e.style.display ? e.style.display = "block" : "block" == e.style.display && (e.style.display = "none")
