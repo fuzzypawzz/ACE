@@ -27,7 +27,6 @@ function fetchTables(guideIDs) {
     } else {
         console.error("fetchTables responded with an error: Parameter is not present or is not of type: 'array'");
     }
-
 }
 
 export { fetchTables };
