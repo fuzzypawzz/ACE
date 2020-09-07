@@ -4,7 +4,7 @@
   "description": "ACE knowledge platform scripts",
   "main": "main.js",
   "scripts": {
-    "build": "babel modules -d lib"
+    "build": "babel . -d lib"
   },
   "repository": {
     "type": "git",
