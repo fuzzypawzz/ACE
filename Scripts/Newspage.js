@@ -194,7 +194,7 @@ var newsPage = (function() {
         initiate: function() {
             var modalImgs, imgCount, tableNodeList, 
                 overAllPageWrapper, deleteIcon,
-                tableJSON, allNewsContentLenght, 
+                tableJSON, allNewsContentLenght,
                 tableNodeListLenght;
 
             // ---- QUERY NEWS SECTION WRAPPER ----
@@ -221,9 +221,9 @@ var newsPage = (function() {
 
             // ---- ADD EVENT LISTENERS TO THE SEARCH DELETE ICON ----
             document.querySelector(`#${DEFAULTS.searchDeleteIconID}`)
-                .addEventListener("click", function(event) {
-                    newsPage.clearSearch();
-                });
+            .addEventListener("click", function(event) {
+                newsPage.clearSearch();
+            });
 
             this.setupSelectOptions();
 
