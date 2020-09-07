@@ -1,0 +1,22 @@
+{
+  "name": "ace",
+  "version": "1.0.0",
+  "description": "ACE knowledge platform scripts",
+  "main": "main.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fuzzypawzz/ACE.git"
+  },
+  "keywords": [
+    "humany"
+  ],
+  "author": "Jannik Maag",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fuzzypawzz/ACE/issues"
+  },
+  "homepage": "https://github.com/fuzzypawzz/ACE#readme"
+}
