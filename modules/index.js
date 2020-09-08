@@ -1,11 +1,11 @@
-import { polys } from "./modules/Polyfills.js";
+import { polys } from "./Polyfills.js";
 import {
   tableKeyNames,
   classNames,
   filteredTableData,
   uniqueNumber,
-} from "./modules/defaults.js";
-import segmentProvider from "./modules/segmentProvider.js";
+} from "./defaults.js";
+import segmentProvider from "./segmentProvider.js";
 import {
   fetchNotificationTables as tableDataParser,
   DEFAULTS,
@@ -14,9 +14,9 @@ import {
   blocks,
   newsCreatedToday,
   guideIDSToFetch,
-} from "./modules/tableDataParser.js";
-import htmlGenerator from "./modules/htmlGenerator.js";
-import { Template } from "./modules/contructors.js";
+} from "./tableDataParser.js";
+import htmlGenerator from "./htmlGenerator.js";
+import { Template } from "./contructors.js";
 
 // Could call fetch notification tables first, with the delay of 50 miliseconds
 // when tables has been fetched, the initiate function should be called
