@@ -4,7 +4,9 @@
   "description": "ACE knowledge platform scripts",
   "private": true,
   "scripts": {
-    "build": "babel . -d dist"
+    "build": "webpack",
+    "dev": "webpack --mode=development",
+    "prod": "webpack --mode=production"
   },
   "repository": {
     "type": "git",
