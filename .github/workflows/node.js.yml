@@ -4,7 +4,7 @@
 name: Node.js CI
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
         node-version: [12.x]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@master
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
