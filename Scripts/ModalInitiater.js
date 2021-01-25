@@ -1,6 +1,7 @@
 let ModalInitiater = (function () {
   // Contructor
   function ModalInitiater(configuration) {
+    console.log("modal running")
     this.guideHtml = configuration.guideHtml;
     this.callback = configuration.callback;
     this.guideContentSectionId = configuration.guideContentSectionId;
@@ -53,3 +54,7 @@ let ModalInitiater = (function () {
 
   return ModalInitiater;
 })();
+
+module.exports = {
+  ModalInitiater
+};

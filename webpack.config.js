@@ -1,15 +1,31 @@
+const webpack = require("webpack");
 const path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
-	entry: {
-		entry: "./src/index.js"
-	},
-    plugins: [
-        new CleanWebpackPlugin()
+  mode: "development",
+  entry: path.resolve(__dirname, "./src/index.js"),
+  output: {
+    path: path.resolve(__dirname, "dist"),
+    filename: "bundle.js",
+    libraryTarget: "var",
+    library: "EntryPoint",
+  },
+  module: {
+    rules: [
+      {
+        test: /\.(js)$/,
+        exclude: /node_modules/,
+        use: ["babel-loader"],
+      },
+      {
+        test: /\.(scss|css)$/,
+        use: ["style-loader", "css-loader", "sass-loader"],
+      },
     ],
-	output: {
-		filename: "main.js",
-		path: path.resolve(__dirname, "dist"),
-	},
+  },
+  resolve: {
+    extensions: ["*", ".js"],
+  },
+  plugins: [new CleanWebpackPlugin()],
 };

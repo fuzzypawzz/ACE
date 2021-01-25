@@ -454,3 +454,5 @@ var createButtons = (function () {
 
     };
 })(); // This script is initiated from the notifications
+
+export { createButtons }
