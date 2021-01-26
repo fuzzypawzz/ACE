@@ -1,20 +1,19 @@
-let ModalInitiater = (function () {
+export default (function () {
   // Contructor
   function ModalInitiater(configuration) {
-    console.log("modal running")
-    this.guideHtml = configuration.guideHtml;
-    this.callback = configuration.callback;
-    this.guideContentSectionId = configuration.guideContentSectionId;
-    this.modalCloseButtonId = configuration.modalCloseButtonId;
-    this.modalElementId = configuration.modalElementId;
+    let _this = this;
+    _this.guideHtml = configuration.guideHtml;
+    _this.callback = configuration.callback;
+    _this.guideContentSectionId = configuration.guideContentSectionId;
+    _this.modalCloseButtonId = configuration.modalCloseButtonId;
+    _this.modalElementId = configuration.modalElementId;
 
-    if (this.modalCloseButtonId && this.modalElementId) {
-      // Do some stuff
-      methods.addHtmlToElement(this.guideHtml, this.guideContentSectionId);
-      methods.addCloseBtnListener(this.modalCloseButtonId, this.modalElementId);
+    if (_this.modalCloseButtonId && _this.modalElementId) {
+      methods.addHtmlToElement(_this.guideHtml, _this.guideContentSectionId);
+      methods.addCloseBtnListener(_this.modalCloseButtonId, _this.modalElementId);
 
-      if (this.callback) {
-        this.callback();
+      if (_this.callback) {
+        _this.callback();
       }
     } else {
       throw new Error("Configuration is not correct!");
@@ -55,6 +54,6 @@ let ModalInitiater = (function () {
   return ModalInitiater;
 })();
 
-module.exports = {
-  ModalInitiater
-};
+// module.exports = {
+//   ModalInitiater
+// };

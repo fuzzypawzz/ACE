@@ -8,6 +8,7 @@
     "dev": "webpack --mode=development",
     "prod": "webpack --mode=production"
   },
+  "main": "dist/bundle.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/fuzzypawzz/ACE.git"

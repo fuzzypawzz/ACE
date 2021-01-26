@@ -1,11 +1,4 @@
-(function () {
-  "use strict";
-})();
-
 import ModalInitiater from "../Scripts/ModalInitiater.js";
+import Init from "../Scripts/test.js";
 
-module.exports = {
-  run: function () {
-    new ModalInitiater();
-  },
-};
+export { ModalInitiater, Init };

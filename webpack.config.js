@@ -1,4 +1,3 @@
-const webpack = require("webpack");
 const path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
@@ -9,7 +8,7 @@ module.exports = {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
     libraryTarget: "var",
-    library: "EntryPoint",
+    library: "AceCustomizer",
   },
   module: {
     rules: [
