@@ -1,4 +1,4 @@
 import ModalInitiater from "../Scripts/ModalInitiater.js";
-import Init from "../Scripts/test.js";
+import ButtonSetup from "../Scripts/ButtonSetup.js";
 
-export { ModalInitiater, Init };
+export { ModalInitiater, ButtonSetup };
