@@ -1,6 +1,8 @@
 import GuideFetcher from "../../services/GuideFetcher";
 import { IGuideFetcherConfig } from "../../services/GuideFetcher";
 import HtmlTableParser from "../../services/HtmlTableParser";
+import newsItemFragmentGenerator from "../newspage/functions/newsItemFragmentGenerator";
+import returnTableInBody from "../newspage/functions/returnTableInBody";
 
 interface INewsPageConfig {
   guideIds: Number[];
@@ -25,10 +27,10 @@ export default class NewsPage {
     this.guideIds = newsPageConfig.guideIds;
     this.tableElementId = newsPageConfig.tableElementId;
     this.segment = newsPageConfig.segment;
-    this.init();
+    this.handler = this.handler.bind(this);
   }
 
-  private init() {
+  public init() {
     // Get the table data by using the fetcher module to fetch each guide
     this.guideIds.forEach((id) => {
       const configuration: IGuideFetcherConfig = {
@@ -43,34 +45,19 @@ export default class NewsPage {
   }
 
   private handler(htmlBody: any) {
-      debugger;
-    const tableElementId = this.tableElementId;
-    console.log(tableElementId);
-
-    function returnTableElement(htmlBody: any): any {
-      let tableElement;
-      const div: Element = document.createElement("DIV");
-      div.innerHTML = htmlBody;
-      try {
-        let tableElement: Element = div.querySelector(
-          `#${this.tableElementId}`
-        );
-      } catch (err) {
-        console.log(err);
-      }
-      if (!tableElement) {
-        // TODO: Use error message from constants
-        console.warn(
-          `A table element with id: ${this.tableElementId} could not be found.`
-        );
-        tableElement = div.querySelector("table");
-      }
-      return tableElement ? tableElement : new Error("Table not found");
+    const table: Element | void = returnTableInBody(
+      htmlBody,
+      this.tableElementId
+    );
+    // TODO: Use error message from constants
+    if (!table) {
+      throw new Error(
+        "Table of news was not found. Make sure the id of the element is correct."
+      );
     }
-
-    // Do something with the html body returned from the parser function
-    const table: any = returnTableElement(htmlBody);
-    const tableData: Array<any> = new HtmlTableParser(table).returnJson();
-    console.log(tableData);
+    const tableData: Array<any> = new HtmlTableParser(table).tableDataToList();
+    console.log(tableData[0]);
+    const fragment: DocumentFragment = newsItemFragmentGenerator(tableData);
+    document.querySelector("body").appendChild(fragment);
   }
 }
