@@ -13,7 +13,7 @@ export default class NewsPage {
      * { segment: "tjekit-all-brand", guideIds: [32323, 23232, 1232131], tableElementId: "_someId" }
      */
     constructor(newsPageConfig: INewsPageConfig);
-    private init;
+    init(): void;
     private handler;
 }
 export {};
