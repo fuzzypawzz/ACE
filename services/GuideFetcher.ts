@@ -24,7 +24,6 @@ export default class GuideFetcher {
     if (config.mockRequestUrl) {
       this.mockRequestUrl = config.mockRequestUrl;
     }
-    this.get();
   }
 
   public get(): any {
