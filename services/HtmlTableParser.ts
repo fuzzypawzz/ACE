@@ -32,7 +32,7 @@ export default class HtmlTableParser {
     return data;
   }
 
-  public returnJson() {
+  public tableDataToList() {
     return this.parsedData;
   }
 }
