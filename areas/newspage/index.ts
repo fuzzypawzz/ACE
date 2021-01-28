@@ -3,6 +3,7 @@ import { IGuideFetcherConfig } from "../../services/GuideFetcher";
 import HtmlTableParser from "../../services/HtmlTableParser";
 import newsItemFragmentGenerator from "../newspage/functions/newsItemFragmentGenerator";
 import returnTableInBody from "../newspage/functions/returnTableInBody";
+import tableDataTrimmer from "../newspage/functions/tableDataTrimmer";
 
 interface INewsPageConfig {
   guideIds: Number[];
@@ -55,8 +56,12 @@ export default class NewsPage {
         "Table of news was not found. Make sure the id of the element is correct."
       );
     }
+    console.log(table)
     const tableData: Array<any> = new HtmlTableParser(table).tableDataToList();
-    console.log(tableData[0]);
+    console.log(tableData);
+    const cleanData: Array<any> = tableDataTrimmer(tableData);
+    console.log(cleanData)
+    
     const fragment: DocumentFragment = newsItemFragmentGenerator(tableData);
     document.querySelector("body").appendChild(fragment);
   }

@@ -1,3 +1,5 @@
+// TODO: Make generic
+
 export default function returnTableInBody(htmlBody: any, tableElementId: string): Element | void {
   let tableElement: Element;
   const div: Element = document.createElement("DIV");
