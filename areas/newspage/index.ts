@@ -4,6 +4,7 @@ import HtmlTableParser from "../../services/HtmlTableParser";
 import newsItemFragmentGenerator from "../newspage/functions/newsItemFragmentGenerator";
 import returnTableInBody from "../newspage/functions/returnTableInBody";
 import tableDataTrimmer from "../newspage/functions/tableDataTrimmer";
+import enrichWithIds from "./functions/provideIds";
 
 interface INewsPageConfig {
   guideIds: Number[];
@@ -12,9 +13,10 @@ interface INewsPageConfig {
 }
 
 export default class NewsPage {
-  guideIds: Array<Number>;
+  private guideIds: Array<Number>;
   private segment: string;
   private tableElementId: string;
+  public tableData: Array<any>;
 
   /**
    *
@@ -56,13 +58,13 @@ export default class NewsPage {
         "Table of news was not found. Make sure the id of the element is correct."
       );
     }
-    console.log(table)
-    const tableData: Array<any> = new HtmlTableParser(table).tableDataToList();
-    console.log(tableData);
-    const cleanData: Array<any> = tableDataTrimmer(tableData);
-    console.log(cleanData)
-    
-    const fragment: DocumentFragment = newsItemFragmentGenerator(tableData);
-    document.querySelector("body").appendChild(fragment);
+    const tableDataList: Array<any> = new HtmlTableParser(table).tableDataToList();
+    this.tableData = enrichWithIds(tableDataList);
+    console.log(this.tableData);
+
+    const fragments: DocumentFragment = newsItemFragmentGenerator(
+      this.tableData
+    );
+    document.querySelector("body").appendChild(fragments);
   }
 }

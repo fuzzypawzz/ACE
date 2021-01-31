@@ -1,30 +1,13 @@
+import { ITemplateContent } from "./BaseTemplateElement";
 import ClassNames from "../Constants/NewsItemClassNames";
-
-interface ITemplateContent {
-  author: string;
-  date: string;
-  headline: string;
-  body: any;
-  id?: string;
-}
 
 /**
  * 
- * @param data Data that should be merged into values in the markup
- * Sample of argument
- * { 
-        author: "Jannik",
-        date: "28 Januar 2021",
-        headline: "My awesome template!",
-        body: "<p><span>Some nested body stuff!</span></p>"
-    }
+ * @param data data object for merging into template queryString
+ * @returns a queryString template that can set to an Element's innerHTML.
  */
-export default function newsItemTemplate(data: ITemplateContent): Element {
-  const element: Element = document.createElement("DIV");
-  // we don't want to apply id when its null, since the id would then be "null"
-  data.id ? (element.id = data.id) : null;
-
-  const template = `
+export default function createNewsItemTemplate(data: ITemplateContent): string {
+  const template: string = `
     <div class="${ClassNames.wrapper}">
         <section class="${ClassNames.header}">
             <div class="${ClassNames.logoWrapper}">
@@ -43,6 +26,5 @@ export default function newsItemTemplate(data: ITemplateContent): Element {
         </section>
     </div>
     `;
-  element.innerHTML = template;
-  return element;
+  return template;
 }
