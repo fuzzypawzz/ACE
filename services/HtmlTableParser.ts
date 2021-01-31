@@ -32,6 +32,9 @@ export default class HtmlTableParser {
     return data;
   }
 
+  /**
+   * @returns a list of data parsed from the html table
+   */
   public tableDataToList() {
     return this.parsedData;
   }
