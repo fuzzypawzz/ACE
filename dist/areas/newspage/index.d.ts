@@ -4,9 +4,10 @@ interface INewsPageConfig {
     segment: string;
 }
 export default class NewsPage {
-    guideIds: Array<Number>;
+    private guideIds;
     private segment;
     private tableElementId;
+    tableData: Array<any>;
     /**
      *
      * @param newsPageConfig See the INewsPageConfig interface
