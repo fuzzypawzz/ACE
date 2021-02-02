@@ -1,6 +1,10 @@
 import { ITemplateContent } from "./BaseTemplateElement";
 import ClassNames from "../Constants/NewsItemClassNames";
 
+// TODO: Refractor how photos are handled to become conditionally
+// TODO: Refractor how links are handled to become conditionally,
+// ..and links should be rendered as buttons
+
 /**
  * 
  * @param data data object for merging into template queryString
@@ -23,6 +27,12 @@ export default function createNewsItemTemplate(data: ITemplateContent): string {
         <section class="${ClassNames.newsContentWrapper}">
             <h3 class="${ClassNames.newsContentHeadline}">${data.headline}</h3>
             <section class="${ClassNames.newsContentBody}">${data.body}</section>
+        </section>
+        <section class="${ClassNames.newsContentPhotos}">
+            ${data.photos}
+        </section>
+        <section class="${ClassNames.newsContentLinks}">
+            ${data.links}
         </section>
     </div>
     `;

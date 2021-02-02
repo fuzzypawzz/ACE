@@ -3,6 +3,8 @@ export interface ITemplateContent {
   date: string;
   headline: string;
   body: any;
+  photos?: any;
+  links?: any;
   id?: string;
 }
 
