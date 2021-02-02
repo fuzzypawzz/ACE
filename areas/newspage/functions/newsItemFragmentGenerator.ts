@@ -15,14 +15,18 @@ export default function newsItemFragmentGenerator(
       date: object.dag,
       headline: object.overskrift,
       body: object.tekst,
+      photos: object.billede,
+      links: object.link,
       id: object.id,
     };
 
     const queryStringTemplate = createNewsItemTemplate(dataForTemplate);
+
     const element: Element = new BaseTemplateElement(
       queryStringTemplate,
       dataForTemplate
     ).returnElement();
+
     fragment.appendChild(element);
   });
 
