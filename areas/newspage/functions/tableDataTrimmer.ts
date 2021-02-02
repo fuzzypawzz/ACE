@@ -3,45 +3,34 @@
 import translateMonth from "./monthTranslater";
 import cleanUpMonth from "./monthStringCleaner";
 import removeEmptyValues from "./emptyValueRemover";
-
-const tableKeyNames = {
-  day: "table_dag", // Creation DAY of the article
-  month: "table_maaned", // Same as above, but MONTH
-  year: "table_aar", // Same as above, but YEAR
-  author: "table_afsender", // The writers name, next to the pebble icon
-  icon: "logo", // The pebble icon, or any other icon is specified
-  headline: "table_overskrift", // Headline in the content section
-  contentText: "table_tekst", // The actual text in the content section
-  img: "table_billede", // Image if applicable, click to expand
-  href: "table_link", // Href, humany guide or link to website
-  linkText: "linktekst", // Label on the button which directs to the link
-};
+import TableKeys from "../Constants/TableKeys";
+import isDateSame from "./isDateSame";
 
 export default function trimTableData(tableData: any): Array<any> {
   if (!Array.isArray(tableData)) {
     throw new Error("Arguments must be an array!");
   }
-  let uniqueNumber = 38492;
-  let list: Array<any> = [];
-  
-  for (let i = 0; i < tableData.length; i++) {
-    let newsData: Object<any> = {};
-    let headline, innerHTML, image, link;
-    let isTagged = false;
 
-    let day = removeEmptyValues(tableData[i][tableKeyNames]["day"]).trim();
+  let uniqueNumber = 38492;
+  const list: Array<any> = [];
+
+  for (let i = 0; i < tableData.length; i++) {
+    const newsData: Object<any> = {};
+
+    let day = removeEmptyValues(tableData[i][`${TableKeys.DAY}`]).trim();
     if (!day) {
       continue;
     }
-    let monthText = tableData[i][tableKeyNames]["month"].trim();
+
+    let monthText = tableData[i][`${TableKeys.MONTH}`].trim();
     if (!monthText) {
       continue;
     }
-    // Make sure the month is in english for creating the date object (for sorting)
-    let monthInEnglish = translateMonth(rawMonth);
-    // And write it correctly in danish for showing to the users
-    let monthInDanish = cleanUpMonth(monthInEnglish);
-    let year = tableData[i][tableKeyNames]["year"].trim();
+
+    const monthInEnglish = translateMonth(monthText);
+    const monthInDanish = cleanUpMonth(monthInEnglish);
+
+    let year = tableData[i][`${TableKeys.YEAR}`].trim();
 
     let today = new Date();
     // Translation index starts at: 1 (January)
@@ -52,7 +41,8 @@ export default function trimTableData(tableData: any): Array<any> {
     );
 
     newsData.date = new Date(`${monthInEnglish} ${day}, ${year} 00:00:00`); // Date object for sorting
-    if (checkIfDateIsSame(newsData.date, todaysDate)) {
+    if (isDateSame(newsData.date, todaysDate)) {
+      debugger;
       newsData.dateString = "Nyhed fra i dag";
 
       // Update to keep a counter showing how many news is from today
@@ -64,7 +54,7 @@ export default function trimTableData(tableData: any): Array<any> {
     }
 
     // ---- CLEAN AUTHOR NAME STRING ----
-    newsData.author = removeEmptyValues(tableData[i][tableKeyNames]["author"])
+    newsData.author = removeEmptyValues(tableData[i][`${TableKeys.AUTHOR}`])
       .trim()
       .toUpperCase();
     // Give author default value if nothing is specified by user
@@ -78,17 +68,13 @@ export default function trimTableData(tableData: any): Array<any> {
       "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png";
 
     newsData.headline = removeEmptyValues(
-      tableData[i][tableKeyNames]["headline"]
+      tableData[i][`${TableKeys.HEADLINE}`]
     ).trim();
     newsData.innerHTML = removeEmptyValues(
-      tableData[i][tableKeyNames]["contentText"]
+      tableData[i][`${TableKeys.CONTENT_TEXT}`]
     ).trim();
-    newsData.image = removeEmptyValues(
-      tableData[i][tableKeyNames]["img"]
-    ).trim();
-    newsData.link = removeEmptyValues(
-      tableData[i][tableKeyNames]["href"]
-    ).trim();
+    newsData.image = removeEmptyValues(tableData[i][`${TableKeys.IMG}`]).trim();
+    newsData.link = removeEmptyValues(tableData[i][`${TableKeys.HREF}`]).trim();
 
     // ---- ASSIGN UNIQUE ID ----
     newsData.uniqueID = `news_${uniqueNumber}`;
