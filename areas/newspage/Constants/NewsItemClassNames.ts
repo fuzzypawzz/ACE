@@ -10,5 +10,6 @@ export default class NewsItemClassNames {
   static readonly newsContentWrapper: string = "newsblock-01-content";
   static readonly newsContentHeadline: string = "newsblock-content-headline";
   static readonly newsContentBody: string = "newsblock-content-p";
+  static readonly newsContentLinks: string = "newsblock-01-refs";
   static readonly newsContentPhotos: string = "newsblock-01-photos";
 }
