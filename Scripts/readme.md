@@ -4,7 +4,7 @@ The script is loaded in the portal by a script tag referencing the GitHub produc
 ### Example on how this is done:
 In Humany admin, on the VIP portal, in the custom HTML and JavaScript footer:
 <script src="https://cdn.jsdelivr.net/gh/fuzzypawzz/ACE@2.2/Scripts/Newspage.min.js"></script>
-This is pointing to this script (the CDN will be minifying the code): https://github.com/fuzzypawzz/ACE/blob/master/Scripts/Newspage.js
+This is pointing to this script (the CDN will be minifying the code):https://github.com/fuzzypawzz/ACE/blob/master/Scripts/Newspage.js
 See the latest release package, when writing this guide it was version 2.2.
 
 ### The guides in Humany
