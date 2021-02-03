@@ -16,5 +16,6 @@ export default class NewsPage {
     constructor(newsPageConfig: INewsPageConfig);
     init(): void;
     private handler;
+    private updateDOM;
 }
 export {};

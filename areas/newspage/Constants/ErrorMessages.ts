@@ -10,4 +10,7 @@ export class ErrorMessages {
 
   static readonly NOT_ARRAY_OR_EMPTY: string =
     "The argument is either not an Array or does not contain any data";
+
+  static readonly COULD_NOT_UPDATE_DOM: string =
+    "Target element with the provided id does not exist";
 }

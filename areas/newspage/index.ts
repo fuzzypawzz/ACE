@@ -3,7 +3,8 @@ import { IGuideFetcherConfig } from "../../services/GuideFetcher";
 import HtmlTableParser from "../../services/HtmlTableParser";
 import newsItemFragmentGenerator from "../newspage/functions/newsItemFragmentGenerator";
 import returnTableInBody from "../newspage/functions/returnTableInBody";
-import tableDataTrimmer from "../newspage/functions/tableDataTrimmer";
+import trimTableData from "../newspage/functions/tableDataTrimmer";
+import { ErrorMessages } from "./Constants/ErrorMessages";
 import enrichWithIds from "./functions/provideIds";
 
 interface INewsPageConfig {
@@ -58,13 +59,29 @@ export default class NewsPage {
         "Table of news was not found. Make sure the id of the element is correct."
       );
     }
-    const tableDataList: Array<any> = new HtmlTableParser(table).tableDataToList();
-    this.tableData = enrichWithIds(tableDataList);
+    const tableDataList: Array<any> = new HtmlTableParser(
+      table
+    ).tableDataToList();
+
+    const trimmedData = trimTableData(tableDataList);
+    this.tableData = enrichWithIds(trimmedData);
+
     console.log(this.tableData);
 
-    const fragments: DocumentFragment = newsItemFragmentGenerator(
+    const newsFragment: DocumentFragment = newsItemFragmentGenerator(
       this.tableData
     );
-    document.querySelector("body").appendChild(fragments);
+    
+    this.updateDOM(newsFragment, "body");
+
+    // Need to display latest 10 results in the side nav
+    // Need to display all news in a container defined in the config, unless that a modal
+  }
+
+  private updateDOM(fragment: DocumentFragment, targetId: string): void {
+    const target: Node = document.querySelector(`#${targetId}`);
+    target
+      ? target.appendChild(fragment)
+      : console.error(`updateDOM: ${ErrorMessages.COULD_NOT_UPDATE_DOM}`);
   }
 }
