@@ -24,7 +24,7 @@ module.exports = {
       },
       {
         test: /\.(scss|css)$/,
-        use: ["style-loader", "css-loader", "sass-loader"],
+        use: [{loader: "style-loader", options: {injectType: "singletonStyleTag"}}, "css-loader", "sass-loader"],
       },
     ],
   },
