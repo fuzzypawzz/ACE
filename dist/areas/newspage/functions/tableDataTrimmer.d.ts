@@ -1,1 +1,1 @@
-export default function trimTableData(tableData: any): Array<any>;
+export default function trimTableData(tableData: Array<any>): Array<any>;

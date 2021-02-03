@@ -1,87 +1,44 @@
-// @ts-nocheck
-
 import translateMonth from "./monthTranslater";
 import cleanUpMonth from "./monthStringCleaner";
 import removeEmptyValues from "./emptyValueRemover";
 import TableKeys from "../Constants/TableKeys";
 import isDateSame from "./isDateSame";
+import Strings from "../Constants/Strings";
 
-export default function trimTableData(tableData: any): Array<any> {
+// TODO: Refractor this to not know about the data
+export default function trimTableData(tableData: Array<any>): Array<any> {
   if (!Array.isArray(tableData)) {
     throw new Error("Arguments must be an array!");
   }
 
-  let uniqueNumber = 38492;
-  const list: Array<any> = [];
+  // TODO: Introduce error handling when values are undefined
+  tableData.forEach((newsItem) => {
+    // TODO: Should not trim id
+    // Clean all data and assign to itself
+    Object.entries(newsItem).forEach((entry: any) => {
+      newsItem[entry[0]] = removeEmptyValues(entry[1], entry[0]).trim();
+    });
 
-  for (let i = 0; i < tableData.length; i++) {
-    const newsData: Object<any> = {};
+    const day = newsItem[`${TableKeys.DAY}`];
+    const monthInEnglish = translateMonth(newsItem[`${TableKeys.MONTH}`]);
+    const year = newsItem[`${TableKeys.YEAR}`];
+    newsItem.date = new Date(`${monthInEnglish} ${day}, ${year} 00:00:00`);
 
-    let day = removeEmptyValues(tableData[i][`${TableKeys.DAY}`]).trim();
-    if (!day) {
-      continue;
-    }
+    const today = new Date();
+    const todaysMonthString: string = translateMonth(today.getMonth() + 1);
 
-    let monthText = tableData[i][`${TableKeys.MONTH}`].trim();
-    if (!monthText) {
-      continue;
-    }
-
-    const monthInEnglish = translateMonth(monthText);
-    const monthInDanish = cleanUpMonth(monthInEnglish);
-
-    let year = tableData[i][`${TableKeys.YEAR}`].trim();
-
-    let today = new Date();
-    // Translation index starts at: 1 (January)
-    let todaysMonthString = translateMonth(today.getMonth() + 1);
-    // Get the month translated from number to text
-    let todaysDate = new Date(
+    const todaysDate = new Date(
       `${todaysMonthString}, ${today.getDate()}, ${today.getFullYear()} 00:00:00`
     );
+    const monthInDanish = cleanUpMonth(monthInEnglish);
+    isDateSame(newsItem.date, todaysDate)
+      ? (newsItem.danishDateText = Strings.NEWS_FROM_TODAY_TEXT)
+      : (newsItem.danishDateText = `${day}. ${monthInDanish} ${year}`);
 
-    newsData.date = new Date(`${monthInEnglish} ${day}, ${year} 00:00:00`); // Date object for sorting
-    if (isDateSame(newsData.date, todaysDate)) {
-      debugger;
-      newsData.dateString = "Nyhed fra i dag";
-
-      // Update to keep a counter showing how many news is from today
-      // TODO: Handle this somehow
-      let newsCreatedToday = 0;
-      newsCreatedToday++;
-    } else {
-      newsData.dateString = `${day}. ${monthInDanish} ${year}`; // Date as string for showing in page
+    // TODO: Use constants for default author
+    if (!newsItem.author) {
+      newsItem[TableKeys.AUTHOR] = "SU Teamet";
     }
-
-    // ---- CLEAN AUTHOR NAME STRING ----
-    newsData.author = removeEmptyValues(tableData[i][`${TableKeys.AUTHOR}`])
-      .trim()
-      .toUpperCase();
-    // Give author default value if nothing is specified by user
-    if (!newsData.author) {
-      newsData.author = "SU Teamet";
-    }
-
-    // ---- DETERMINE WHICH ICON TO USE ----
-    // TODO: This should be SVG and not a pebble from some url, take way too long to load
-    newsData.icon =
-      "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png";
-
-    newsData.headline = removeEmptyValues(
-      tableData[i][`${TableKeys.HEADLINE}`]
-    ).trim();
-    newsData.innerHTML = removeEmptyValues(
-      tableData[i][`${TableKeys.CONTENT_TEXT}`]
-    ).trim();
-    newsData.image = removeEmptyValues(tableData[i][`${TableKeys.IMG}`]).trim();
-    newsData.link = removeEmptyValues(tableData[i][`${TableKeys.HREF}`]).trim();
-
-    // ---- ASSIGN UNIQUE ID ----
-    newsData.uniqueID = `news_${uniqueNumber}`;
-    uniqueNumber++;
-
-    list.push(newsData);
-  }
-
-  return list;
+  });
+  return tableData;
 }
