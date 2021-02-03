@@ -8,6 +8,7 @@ export default function newsItemFragmentGenerator(
   data: Array<any>
 ): DocumentFragment {
   const fragment: DocumentFragment = document.createDocumentFragment();
+  
   // TODO: Get element id prefix from constant
   data.forEach((object) => {
     const dataForTemplate: ITemplateContent = {
