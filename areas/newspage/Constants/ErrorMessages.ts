@@ -1,11 +1,13 @@
 export class ErrorMessages {
-  static readonly developerModeIsOn: String =
+  static readonly developerModeIsOn: string =
     "Developer mode is ON. Remember to turn off developer mode before deploying to production!";
 
-  static readonly missingConfigurationFile: String =
+  static readonly missingConfigurationFile: string =
     "There is no configuration";
 
-  static readonly couldNotFindTableId: String =
+  static readonly couldNotFindTableId: string =
     "No table with the provided id exists";
 
+  static readonly NOT_ARRAY_OR_EMPTY: string =
+    "The argument is either not an Array or does not contain any data";
 }
