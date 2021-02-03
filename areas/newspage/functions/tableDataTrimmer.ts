@@ -3,13 +3,19 @@ import cleanUpMonth from "./monthStringCleaner";
 import removeEmptyValues from "./emptyValueRemover";
 import TableKeys from "../Constants/TableKeys";
 import isDateSame from "./isDateSame";
-import Strings from "../Constants/Strings";
+import Constants from "../Constants/Strings";
+import { ErrorMessages } from "../Constants/ErrorMessages";
 
 // TODO: Refractor this to not know about the data
 export default function trimTableData(tableData: Array<any>): Array<any> {
-  if (!Array.isArray(tableData)) {
-    throw new Error("Arguments must be an array!");
+  if (!Array.isArray(tableData) || !tableData.length) {
+    throw new Error(ErrorMessages.NOT_ARRAY_OR_EMPTY);
   }
+
+  const _day = TableKeys.DAY,
+    _month = TableKeys.MONTH,
+    _year = TableKeys.YEAR,
+    _author = TableKeys.AUTHOR;
 
   // TODO: Introduce error handling when values are undefined
   tableData.forEach((newsItem) => {
@@ -19,9 +25,9 @@ export default function trimTableData(tableData: Array<any>): Array<any> {
       newsItem[entry[0]] = removeEmptyValues(entry[1], entry[0]).trim();
     });
 
-    const day = newsItem[`${TableKeys.DAY}`];
-    const monthInEnglish = translateMonth(newsItem[`${TableKeys.MONTH}`]);
-    const year = newsItem[`${TableKeys.YEAR}`];
+    const day = newsItem[_day];
+    const monthInEnglish = translateMonth(newsItem[_month]);
+    const year = newsItem[_year];
     newsItem.date = new Date(`${monthInEnglish} ${day}, ${year} 00:00:00`);
 
     const today = new Date();
@@ -32,12 +38,12 @@ export default function trimTableData(tableData: Array<any>): Array<any> {
     );
     const monthInDanish = cleanUpMonth(monthInEnglish);
     isDateSame(newsItem.date, todaysDate)
-      ? (newsItem.danishDateText = Strings.NEWS_FROM_TODAY_TEXT)
+      ? (newsItem.danishDateText = Constants.NEWS_FROM_TODAY_TEXT)
       : (newsItem.danishDateText = `${day}. ${monthInDanish} ${year}`);
 
     // TODO: Use constants for default author
-    if (!newsItem.author) {
-      newsItem[TableKeys.AUTHOR] = "SU Teamet";
+    if (!newsItem[_author]) {
+      newsItem[_author] = Constants.NEWS_FROM_TODAY_TEXT;
     }
   });
   return tableData;
