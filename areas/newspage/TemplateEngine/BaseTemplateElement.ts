@@ -14,7 +14,7 @@ export default class BaseTemplateElement {
 
   constructor(template: string, data?: ITemplateContent) {
     this.template = template;
-    data.id ? (this.id = data.id) : null;
+    data && data.id ? (this.id = data.id) : null;
   }
 
   public returnElement(): Element {

@@ -1,17 +1,11 @@
-import { ITemplateContent } from "./BaseTemplateElement";
 import ClassNames from "../Constants/NewsItemClassNames";
+const Handlebars = require("handlebars");
 
 // TODO: Refractor how photos are handled to become conditionally
 // TODO: Refractor how links are handled to become conditionally,
 // ..and links should be rendered as buttons
 
-/**
- * 
- * @param data data object for merging into template queryString
- * @returns a queryString template that can set to an Element's innerHTML.
- */
-export default function createNewsItemTemplate(data: ITemplateContent): string {
-  const template: string = `
+export const newsItemTemplate = Handlebars.compile(`
     <div class="${ClassNames.wrapper}">
         <section class="${ClassNames.header}">
             <div class="${ClassNames.logoWrapper}">
@@ -20,21 +14,19 @@ export default function createNewsItemTemplate(data: ITemplateContent): string {
                 </svg>
             </div>
             <div class="${ClassNames.authorAndDateWrapper}">
-                <h2 class="${ClassNames.author}">${data.author}</h2>
-                <h3 class="${ClassNames.date}">${data.date}</h3>
+                <h2 class="${ClassNames.author}">{{author}}</h2>
+                <h3 class="${ClassNames.date}">{{date}}</h3>
             </div>
         </section>
         <section class="${ClassNames.newsContentWrapper}">
-            <h3 class="${ClassNames.newsContentHeadline}">${data.headline}</h3>
-            <section class="${ClassNames.newsContentBody}">${data.body}</section>
+            <h3 class="${ClassNames.newsContentHeadline}">{{headline}}</h3>
+            <section class="${ClassNames.newsContentBody}">{{{body}}}</section>
         </section>
         <section class="${ClassNames.newsContentPhotos}">
-            ${data.photos}
+            {{{photos}}}
         </section>
         <section class="${ClassNames.newsContentLinks}">
-            ${data.links}
+            {{{links}}}
         </section>
     </div>
-    `;
-  return template;
-}
+`);
