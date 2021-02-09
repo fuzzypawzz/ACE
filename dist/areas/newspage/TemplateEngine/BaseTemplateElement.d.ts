@@ -7,9 +7,19 @@ export interface ITemplateContent {
     links?: any;
     id?: string;
 }
+interface IBaseTemplate {
+    id?: string;
+    className?: string;
+}
+/**
+ * Should take in option id and classname for the base element
+ * And return the element, then other functions can append children to that element
+ */
 export default class BaseTemplateElement {
-    protected template: string;
-    protected id?: string;
-    constructor(template: string, data?: ITemplateContent);
+    private id?;
+    private className?;
+    private element;
+    constructor(data?: IBaseTemplate);
     returnElement(): Element;
 }
+export {};

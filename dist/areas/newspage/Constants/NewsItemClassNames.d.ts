@@ -1,5 +1,6 @@
 export default class NewsItemClassNames {
-    static readonly wrapper: string;
+    static readonly sectionWrapper: string;
+    static readonly itemWrapper: string;
     static readonly header: string;
     static readonly logoWrapper: string;
     static readonly svg: string;
@@ -11,4 +12,5 @@ export default class NewsItemClassNames {
     static readonly newsContentBody: string;
     static readonly newsContentLinks: string;
     static readonly newsContentPhotos: string;
+    static readonly latestNewsContainer: string;
 }

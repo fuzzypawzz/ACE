@@ -1,1 +1,1 @@
-export declare const newsItemTemplate: any;
+export declare const newsBlockTemplate: any;
