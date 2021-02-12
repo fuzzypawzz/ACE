@@ -1,29 +1,36 @@
+import getUrlParameterByName from "./functions/getUrlParameterByName";
 import { searchResultInfoBox } from "./templates/searchResultInfoBox";
 import { superWomanSvg } from "./templates/superWomanSvg";
 
 interface IConfiguration {
   targetListElement?: NodeList;
   stringToQuery: string;
-  callback?: Function;
+  // callback?: Function;
   infoText?: string;
   buttonText?: string;
+  onClickRedirectUrl?: string;
+  searchKey: string;
 }
 
-export default class searchResultExtender {
+export default class SearchResultExtender {
   private targetListElement: NodeList;
   private stringToQuery: string = "Ingen resultater";
-  private callback: Function;
+  // private callback: Function;
   private infoText: string;
   private buttonText: string;
+  private onClickRedirectUrl: string;
+  private searchKey: string = "searchkey";
 
   constructor(config: IConfiguration) {
     config.targetListElement
       ? (this.targetListElement = config.targetListElement)
-      : this.targetListElement = document.querySelectorAll(".h-portal-list");
+      : (this.targetListElement = document.querySelectorAll(".h-portal-list"));
     this.stringToQuery = config.stringToQuery;
-    this.callback = config.callback;
+    // this.callback = config.callback;
     this.infoText = config.infoText;
     this.buttonText = config.buttonText;
+    this.onClickRedirectUrl = config.onClickRedirectUrl;
+    config.searchKey ? (this.searchKey = config.searchKey) : null;
   }
 
   private getTargetElement(): Element | undefined {
@@ -55,15 +62,29 @@ export default class searchResultExtender {
       });
       const element: Element = document.createElement("DIV");
       element.innerHTML = template;
-      if (this.callback) {
+      const redirectUrl = this.onClickRedirectUrl;
+      const searchKey = this.searchKey;
+      if (redirectUrl) {
         this.addButtonClickListener(
           element.querySelector("button"),
-          this.callback
+          function () {
+            location.href = `${redirectUrl}&${searchKey}=${getUrlParameterByName(
+              "phrase"
+            )}`;
+          }
         );
       }
+      // else if (this.callback) {
+      //   this.addButtonClickListener(
+      //     element.querySelector("button"),
+      //     this.callback
+      //   );
+      // }
       this.appendInfoBox(element, targetElement);
     } else {
-      throw new Error(`Could not retrieve target element with the text: ${this.stringToQuery}`);
+      throw new Error(
+        `Could not retrieve target element with the text: ${this.stringToQuery}`
+      );
     }
   }
 

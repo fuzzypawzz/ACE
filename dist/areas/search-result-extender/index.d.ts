@@ -1,16 +1,18 @@
 interface IConfiguration {
     targetListElement?: NodeList;
     stringToQuery: string;
-    callback?: Function;
     infoText?: string;
     buttonText?: string;
+    onClickRedirectUrl?: string;
+    searchKey: string;
 }
-export default class searchResultExtender {
+export default class SearchResultExtender {
     private targetListElement;
     private stringToQuery;
-    private callback;
     private infoText;
     private buttonText;
+    private onClickRedirectUrl;
+    private searchKey;
     constructor(config: IConfiguration);
     private getTargetElement;
     createInfoBox(): void;
