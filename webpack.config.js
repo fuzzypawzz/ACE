@@ -3,12 +3,18 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = {
   mode: "development",
+  devtool: "source-map",
   entry: path.resolve(__dirname, "./src/index.js"),
   output: {
     path: path.resolve(__dirname, "dist"),
     filename: "bundle.js",
     libraryTarget: "var",
     library: "AceCustomizer",
+  },
+  devServer: {
+    contentBase: path.join(__dirname, 'dist'),
+    compress: true,
+    port: 9000
   },
   module: {
     rules: [
@@ -24,7 +30,7 @@ module.exports = {
       },
       {
         test: /\.(scss|css)$/,
-        use: ["style-loader", "css-loader", "sass-loader"],
+        use: [{loader: "style-loader", options: {injectType: "singletonStyleTag"}}, "css-loader", "sass-loader"],
       },
     ],
   },

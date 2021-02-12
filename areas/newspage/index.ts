@@ -1,11 +1,15 @@
 import GuideFetcher from "../../services/GuideFetcher";
 import { IGuideFetcherConfig } from "../../services/GuideFetcher";
 import HtmlTableParser from "../../services/HtmlTableParser";
-import newsItemFragmentGenerator from "../newspage/functions/newsItemFragmentGenerator";
 import returnTableInBody from "../newspage/functions/returnTableInBody";
 import trimTableData from "../newspage/functions/tableDataTrimmer";
 import { ErrorMessages } from "./Constants/ErrorMessages";
 import enrichWithIds from "./functions/provideIds";
+import BaseTemplateElement from "./TemplateEngine/BaseTemplateElement";
+import { newsBlockTemplate } from "./TemplateEngine/createNewsItemTemplate";
+import {
+  latestNewsContainer as latestNewsContainerTemplate,
+} from "./templates/latestNewsContainer";
 
 interface INewsPageConfig {
   guideIds: Number[];
@@ -53,11 +57,9 @@ export default class NewsPage {
       htmlBody,
       this.tableElementId
     );
-    // TODO: Use error message from constants
+
     if (!table) {
-      throw new Error(
-        "Table of news was not found. Make sure the id of the element is correct."
-      );
+      throw new Error(ErrorMessages.couldNotFindTableId);
     }
     const tableDataList: Array<any> = new HtmlTableParser(
       table
@@ -66,22 +68,35 @@ export default class NewsPage {
     const trimmedData = trimTableData(tableDataList);
     this.tableData = enrichWithIds(trimmedData);
 
-    console.log(this.tableData);
-
-    const newsFragment: DocumentFragment = newsItemFragmentGenerator(
-      this.tableData
+    this.updateDOM(
+      newsBlockTemplate({
+        entries: this.tableData,
+        logo: "logo",
+      }),
+      "body"
     );
-    
-    this.updateDOM(newsFragment, "body");
+
+    // Container for showing the 10 latest entries in simplified format
+    this.updateDOM(
+      latestNewsContainerTemplate({
+        entries: this.tableData,
+        newsFromTodayCounter: 1,
+        latestNewsHeadline: "Seneste nyheder"
+      }),
+      "body"
+    );
 
     // Need to display latest 10 results in the side nav
     // Need to display all news in a container defined in the config, unless that a modal
   }
 
-  private updateDOM(fragment: DocumentFragment, targetId: string): void {
-    const target: Node = document.querySelector(`#${targetId}`);
+  private updateDOM(html: string, targetId: string): void {
+    // TODO: Refactor this
+    const target: any = document.querySelector(`#${targetId}`);
+    const element: Element = new BaseTemplateElement().returnElement();
+    element.innerHTML = html;
     target
-      ? target.appendChild(fragment)
+      ? target.appendChild(element)
       : console.error(`updateDOM: ${ErrorMessages.COULD_NOT_UPDATE_DOM}`);
   }
 }

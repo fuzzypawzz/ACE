@@ -1,40 +1,39 @@
-import { ITemplateContent } from "./BaseTemplateElement";
 import ClassNames from "../Constants/NewsItemClassNames";
+const Handlebars = require("handlebars");
+import TableKeys from "../Constants/TableKeys";
 
-// TODO: Refractor how photos are handled to become conditionally
-// TODO: Refractor how links are handled to become conditionally,
-// ..and links should be rendered as buttons
+// TODO: Multiple links should be rendered as buttons
 
-/**
- * 
- * @param data data object for merging into template queryString
- * @returns a queryString template that can set to an Element's innerHTML.
- */
-export default function createNewsItemTemplate(data: ITemplateContent): string {
-  const template: string = `
-    <div class="${ClassNames.wrapper}">
-        <section class="${ClassNames.header}">
-            <div class="${ClassNames.logoWrapper}">
-                <svg class="${ClassNames.svg}">
-                    <use href="#_teliaPebbleIcon26"></use>
-                </svg>
-            </div>
-            <div class="${ClassNames.authorAndDateWrapper}">
-                <h2 class="${ClassNames.author}">${data.author}</h2>
-                <h3 class="${ClassNames.date}">${data.date}</h3>
-            </div>
-        </section>
-        <section class="${ClassNames.newsContentWrapper}">
-            <h3 class="${ClassNames.newsContentHeadline}">${data.headline}</h3>
-            <section class="${ClassNames.newsContentBody}">${data.body}</section>
-        </section>
-        <section class="${ClassNames.newsContentPhotos}">
-            ${data.photos}
-        </section>
-        <section class="${ClassNames.newsContentLinks}">
-            ${data.links}
-        </section>
+export const newsBlockTemplate = Handlebars.compile(`
+    <div class="${ClassNames.sectionWrapper}">
+    {{#each entries}}
+        <div class="${ClassNames.itemWrapper}">
+            <section class="${ClassNames.header}">
+                {{#if ../logo}}
+                    <div class="${ClassNames.logoWrapper}">
+                        {{../logo}}
+                    </div>
+                {{/if}}
+                <div class="${ClassNames.authorAndDateWrapper}">
+                    <h2 class="${ClassNames.author}"> {{ this.${TableKeys.AUTHOR} }} </h2>
+                    <h3 class="${ClassNames.date}"> {{ this.${TableKeys.DATE_STRING} }} </h3>
+                </div>
+            </section>
+            <section class="${ClassNames.newsContentWrapper}">
+                <h3 class="${ClassNames.newsContentHeadline}"> {{ this.${TableKeys.HEADLINE} }} </h3>
+                <section class="${ClassNames.newsContentBody}"> {{{ this.${TableKeys.CONTENT_TEXT} }}} </section>
+            </section>
+            {{#if this.${TableKeys.IMG}}}
+                <section class="${ClassNames.newsContentPhotos}">
+                    {{{ this.${TableKeys.IMG} }}}
+                </section>
+            {{/if}}
+            {{#if this.${TableKeys.HREF}}}
+                <section class="${ClassNames.newsContentLinks}">
+                    {{{ this.${TableKeys.HREF} }}}
+                </section>
+            {{/if}}
+        </div>
+        {{/each}}
     </div>
-    `;
-  return template;
-}
+`);

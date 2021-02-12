@@ -1,3 +1,4 @@
+// TODO: Move this interface to another place
 export interface ITemplateContent {
   author: string;
   date: string;
@@ -8,19 +9,32 @@ export interface ITemplateContent {
   id?: string;
 }
 
-export default class BaseTemplateElement {
-  protected template: string;
-  protected id?: string;
+interface IBaseTemplate {
+  id?: string;
+  className?: string;
+}
 
-  constructor(template: string, data?: ITemplateContent) {
-    this.template = template;
-    data.id ? (this.id = data.id) : null;
+/**
+ * Should take in option id and classname for the base element
+ * And return the element, then other functions can append children to that element
+ */
+
+export default class BaseTemplateElement {
+  private id?: string;
+  private className?: string;
+  private element: Element;
+
+  constructor(data?: IBaseTemplate) {
+    data && data.id ? (this.id = data.id) : null;
+    data && data.className ? (this.className = data.className) : null;
+
+    const element = document.createElement("DIV");
+    this.id ? (element.id = this.id) : null;
+    this.className ? (element.className = this.className) : null;
+    this.element = element;
   }
 
   public returnElement(): Element {
-    const element: Element = document.createElement("DIV");
-    this.id ? (element.id = this.id) : null;
-    element.innerHTML = this.template;
-    return element;
+    return this.element;
   }
 }
