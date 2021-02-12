@@ -1,3 +1,6 @@
+import { searchResultInfoBox } from "./templates/searchResultInfoBox";
+
+
 interface IConfiguration {
   targetListElement?: NodeList;
   stringToQuery: string;
@@ -25,6 +28,9 @@ export default class searchResultExtender {
           // Get super woman 
           // query the button on super woman
           // Add event listener to button
+          if (this.callback) {
+            this.addButtonClickListener(button, this.callback);
+          }
           // append woman to target via method
           // break;
         }
@@ -32,8 +38,10 @@ export default class searchResultExtender {
     });
   }
 
-  private addButtonAction(): void {
-    
+  private addButtonClickListener(button: Element, action: Function): void {
+    button.addEventListener("click", () => {
+      action();
+    });
   }
 
   public appendInfoBox(node: Node, targetNode: Node): void {
