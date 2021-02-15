@@ -33,12 +33,9 @@ export default class InGuideLinkConverter {
 
   public convertGuideLinks() {
     // TODO: FIx bug - Throws error when links has already been converted
-    let guideNode;
-    if (this.guideNode) {
-      guideNode = this.guideNode;
-    } else {
-      guideNode = this.getGuideNode(`.${this.guideToQuery}`);
-    }
+    const guideNode = this.guideNode
+      ? this.guideNode
+      : this.getGuideNode(`.${this.guideToQuery}`);
 
     if (!guideNode) {
       throw new Error("Guide converter could not finish - no guide was found!");
