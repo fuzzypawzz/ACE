@@ -1,9 +1,7 @@
 export default function (config) {
-  console.log("Setup script..");
   console.log(config);
 
   function setupResultInfoBox() {
-    console.log("setupResultInfoBox");
     const targetList = document.querySelectorAll(".h-portal-list");
     const configuration = {
       targetListElement: targetList,
@@ -20,49 +18,26 @@ export default function (config) {
     }
   }
 
+  // TOOD: REFACTOR - MAKE INTO AREA ON ITS OWN
   function convertLinksToIcons() {
-    var isGuideShown = document.querySelector(".h-portal-guide.ng-scope");
-    if (isGuideShown) {
-      var contentArea = isGuideShown.querySelector("#internversion");
-      var nodes = contentArea.childNodes;
 
-      var container = document.createElement("div");
-      container.className = "guide-special-options";
-      contentArea.appendChild(container);
+    const converter = new AceCustomizer.InGuideLinkConverter({
+      guideToQuery: "h-portal-guide.ng-scope",
+      guideContentArea: "internversion",
+      specialLinkIdentifiers: [{}],
+    });
 
-      function handler(iconClass, node, title) {
-        var icon = document.createElement("i");
-        icon.className = iconClass;
-        node.title = title;
-
-        var spanChild = node.querySelector("span");
-        if (spanChild) {
-          spanChild.innerText = "";
-          spanChild.appendChild(icon);
-        } else {
-          //node.innerText = "";
-          node.querySelector("a").innerText = "";
-          node.querySelector("a").appendChild(icon);
-        }
-
-        return node;
-      }
-
-      nodes.forEach((node) => {
-        try {
-          if (node.innerText.includes("%eINFO%")) {
-            container.appendChild(handler("fa fa-at", node, "e-INFO"));
-          }
-          if (node.innerText.includes("%camera%")) {
-            container.appendChild(
-              handler("fa fa-camera", node, "Gå til billede-guide")
-            );
-          }
-        } catch (err) {}
-      });
+    // TODO: The guide is only found on the second mutation
+    // Should probably introduce the attempter here as well
+    if (converter.isGuideAvailable()) {
+      console.log("guide is available!")
+      converter.convertGuideLinks();
     }
   }
 
+  /**
+   * Triggers each time a mutation happens on the selected node
+   */
   function observationTrigger() {
     if (config.convertLinks) {
       convertLinksToIcons();

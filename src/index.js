@@ -3,6 +3,7 @@ import ButtonSetup from "../Scripts/ButtonSetup.js";
 import NewsPage from "../areas/newspage/index.ts";
 import SearchResultExtender from "../areas/search-result-extender/index.ts";
 import HumanyNotificationDetector from "../areas/humany-notification-detector";
+import InGuideLinkConverter from "../areas/in-guide-link-converter";
 
 // Helper functions
 import createAttemptFunc from "../helpers/initiateAttemptFunc";
@@ -19,6 +20,7 @@ export {
   NewsPage,
   SearchResultExtender,
   HumanyNotificationDetector,
+  InGuideLinkConverter,
   createAttemptFunc,
   setupObserver,
   setup,
