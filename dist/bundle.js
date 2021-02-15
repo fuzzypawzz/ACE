@@ -160,6 +160,7 @@ var HumanyNotificationDetector = /** @class */ (function () {
         this.InputFieldSelector = config.InputFieldSelector;
         this.targetInputName = config.targetInputName;
         this.searchKey = config.searchKey;
+        this.setInputFieldValue = this.setInputFieldValue.bind(this);
     }
     HumanyNotificationDetector.prototype.detectUrl = function () {
         if (window.location.href.indexOf(this.urlQuery) > -1) {
@@ -1060,15 +1061,12 @@ var superWomanSvg = Handlebars.compile("\n    <svg data-name=\"Layer 1\" xmlns=\
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return createAttemptFunc; });
 function createAttemptFunc(callback, evaluator) {
-    console.log("createAttemptFunc");
     var tryAttempt = 0;
     var callback = callback;
     var startOver = function () {
-        console.log("startOver");
         attempter();
     };
     function attempter() {
-        console.log("attempter");
         if (tryAttempt < 20) {
             setTimeout(function () {
                 // Query to see the nodes availability in the DOM
@@ -6870,8 +6868,9 @@ __webpack_require__.r(__webpack_exports__);
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony default export */ __webpack_exports__["default"] = (function () {
+/* harmony default export */ __webpack_exports__["default"] = (function (config) {
   console.log("Setup script..");
+  console.log(config);
 
   function setupResultInfoBox() {
     console.log("setupResultInfoBox");
@@ -6885,7 +6884,10 @@ __webpack_require__.r(__webpack_exports__);
       buttonText: "Der mangler en guide!"
     };
     var extender = new AceCustomizer.SearchResultExtender(configuration);
-    extender.createInfoBox();
+
+    if (!extender.infoBoxExistsAlready()) {
+      extender.createInfoBox();
+    }
   }
 
   function convertLinksToIcons() {
@@ -6930,15 +6932,21 @@ __webpack_require__.r(__webpack_exports__);
   }
 
   function observationTrigger() {
-    convertLinksToIcons(); // This should not run every time on the modal accordions, but only on the guides, or when modal accordion is not activated
+    if (config.convertLinks) {
+      convertLinksToIcons();
+    }
 
-    accordions.init(); // TODO: This does not need to be called everytime, ..but only when the infobox is not there anymore
+    if (config.accordions) {
+      // This should not run every time on the modal accordions, but only on the guides, or when modal accordion is not activated
+      accordions.init();
+    }
 
-    setupResultInfoBox();
+    if (config.resultInfoBox) {
+      setupResultInfoBox();
+    }
   }
 
-  function returnBreadcrumbWhenAvailable() {
-    console.log("returnBreadcrumbWhenAvailable");
+  function evaluator() {
     var node = document.querySelector(".breadcrumb");
 
     if (node) {
@@ -6947,9 +6955,37 @@ __webpack_require__.r(__webpack_exports__);
       return false;
     }
   }
+  /**
+   * Args: callback function and the evaluator, which is the function checking for the breadcrumb
+   */
 
-  var setupAttempter = new AceCustomizer.createAttemptFunc(AceCustomizer.setupObserver, returnBreadcrumbWhenAvailable);
-  setupAttempter();
+
+  var setupAttempter = new AceCustomizer.createAttemptFunc(function (targetNode) {
+    AceCustomizer.setupObserver(targetNode, observationTrigger);
+  }, evaluator);
+  setupAttempter(); // DEVELOPMENT FOR CATHRIN
+
+  document.addEventListener("DOMContentLoaded", function () {
+    var contactMethodDetector = new AceCustomizer.HumanyNotificationDetector({
+      urlQuery: "14515",
+      InputFieldSelector: ".humany-component-value",
+      targetInputName: "hvad-skrev-du-i-sogefeltet",
+      searchKey: "searchkey"
+    }); // REFACTOR TO USE THE INITIATE ATTEMPT HELPER FUNCTION
+
+    if (contactMethodDetector.detectUrl()) {
+      var attempter = AceCustomizer.createAttemptFunc(contactMethodDetector.setInputFieldValue, function () {
+        var node = document.querySelector(contactMethodDetector.InputFieldSelector);
+
+        if (node) {
+          return node;
+        } else {
+          return false;
+        }
+      });
+      attempter();
+    }
+  });
 });
 
 /***/ }),

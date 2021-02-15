@@ -76,8 +76,7 @@ export default function (config) {
     }
   }
 
-  function returnBreadcrumbWhenAvailable() {
-    console.log("returnBreadcrumbWhenAvailable");
+  function evaluator() {
     var node = document.querySelector(".breadcrumb");
     if (node) {
       return node;
@@ -91,9 +90,34 @@ export default function (config) {
    */
   const setupAttempter = new AceCustomizer.createAttemptFunc((targetNode) => {
     AceCustomizer.setupObserver(targetNode, observationTrigger);
-  }, returnBreadcrumbWhenAvailable);
+  }, evaluator);
 
   setupAttempter();
 
+  // DEVELOPMENT FOR CATHRIN
+  document.addEventListener("DOMContentLoaded", function () {
+    const contactMethodDetector = new AceCustomizer.HumanyNotificationDetector({
+      urlQuery: "14515",
+      InputFieldSelector: ".humany-component-value",
+      targetInputName: "hvad-skrev-du-i-sogefeltet",
+      searchKey: "searchkey",
+    });
 
+    // REFACTOR TO USE THE INITIATE ATTEMPT HELPER FUNCTION
+    if (contactMethodDetector.detectUrl()) {
+
+      const attempter = AceCustomizer.createAttemptFunc(
+        contactMethodDetector.setInputFieldValue,
+        () => {
+          const node = document.querySelector(contactMethodDetector.InputFieldSelector);
+          if (node) {
+            return node;
+          } else {
+            return false;
+          }
+        }
+      );
+      attempter();
+    }
+  });
 }

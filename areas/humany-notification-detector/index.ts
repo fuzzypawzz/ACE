@@ -11,16 +11,17 @@ export default class HumanyNotificationDetector {
   private urlQuery: string;
   private InputFieldSelector: string;
   private targetInputName: string;
-  private searchKey: string = "searchkey";
+  private searchKey: string = "searchkey"; 
 
   constructor(config: IConfiguration) {
     this.urlQuery = config.urlQuery;
     this.InputFieldSelector = config.InputFieldSelector;
     this.targetInputName = config.targetInputName;
     this.searchKey = config.searchKey;
+    this.setInputFieldValue = this.setInputFieldValue.bind(this);
   }
 
-  private detectUrl(): boolean {
+  public detectUrl(): boolean {
     if (window.location.href.indexOf(this.urlQuery) > -1) {
       return true;
     }

@@ -10,7 +10,7 @@ export default class HumanyNotificationDetector {
     private targetInputName;
     private searchKey;
     constructor(config: IConfiguration);
-    private detectUrl;
+    detectUrl(): boolean;
     returnUrlParam(param: string): string;
     setInputFieldValue(): void;
 }
