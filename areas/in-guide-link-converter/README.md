@@ -4,7 +4,7 @@
 - The idea is that the user can make specific buttons on a guide, for showing there is downloadable material available or similar.
 
 ### Initialise
-´´´
+```
 const converter = new AceCustomizer.InGuideLinkConverter({
       guideToQuery: "h-portal-guide.ng-scope",     // MUST BE A CLASSNAME THAT IS ONLY SHOWN WHEN GUIDE IS VISIBLE
       guideContentArea: "internversion",           // MUST BE AN ELEMENT ID
@@ -16,4 +16,4 @@ const converter = new AceCustomizer.InGuideLinkConverter({
       console.log("A guide is showing in the page.")
       converter.convertGuideLinks();
     }
-´´´
+```
