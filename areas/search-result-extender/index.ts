@@ -1,3 +1,4 @@
+import Ids from "./constants/Ids";
 import getUrlParameterByName from "./functions/getUrlParameterByName";
 import { searchResultInfoBox } from "./templates/searchResultInfoBox";
 import { superWomanSvg } from "./templates/superWomanSvg";
@@ -36,7 +37,7 @@ export default class SearchResultExtender {
   private getTargetElement(): Element | undefined {
     let targetElement = undefined;
 
-    // Refactor this
+    // TODO: Refactor this
     // if list then loop through
     // If element then return element
     // If className or ID, then query element and return element
@@ -74,17 +75,19 @@ export default class SearchResultExtender {
           }
         );
       }
-      // else if (this.callback) {
-      //   this.addButtonClickListener(
-      //     element.querySelector("button"),
-      //     this.callback
-      //   );
-      // }
       this.appendInfoBox(element, targetElement);
     } else {
       throw new Error(
         `Could not retrieve target element with the text: ${this.stringToQuery}`
       );
+    }
+  }
+
+  public infoBoxExistsAlready(): boolean {
+    if (document.querySelector(`#${Ids.searchResultInfoBoxId}`)) {
+      return true;
+    } else {
+      return false;
     }
   }
 
