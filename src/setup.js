@@ -1,5 +1,6 @@
-export default function () {
+export default function (config) {
   console.log("Setup script..");
+  console.log(config);
 
   function setupResultInfoBox() {
     console.log("setupResultInfoBox");
@@ -14,7 +15,9 @@ export default function () {
       buttonText: "Der mangler en guide!",
     };
     const extender = new AceCustomizer.SearchResultExtender(configuration);
-    extender.createInfoBox();
+    if (!extender.infoBoxExistsAlready()) {
+      extender.createInfoBox();
+    }
   }
 
   function convertLinksToIcons() {
@@ -61,11 +64,16 @@ export default function () {
   }
 
   function observationTrigger() {
-    convertLinksToIcons();
-    // This should not run every time on the modal accordions, but only on the guides, or when modal accordion is not activated
-    accordions.init();
-    // TODO: This does not need to be called everytime, ..but only when the infobox is not there anymore
-    setupResultInfoBox();
+    if (config.convertLinks) {
+      convertLinksToIcons();
+    }
+    if (config.accordions) {
+      // This should not run every time on the modal accordions, but only on the guides, or when modal accordion is not activated
+      accordions.init();
+    }
+    if (config.resultInfoBox) {
+      setupResultInfoBox();
+    }
   }
 
   function returnBreadcrumbWhenAvailable() {
@@ -78,11 +86,14 @@ export default function () {
     }
   }
 
-  const setupAttempter = new AceCustomizer.createAttemptFunc(
-    AceCustomizer.setupObserver,
-    returnBreadcrumbWhenAvailable
-  );
+  /**
+   * Args: callback function and the evaluator, which is the function checking for the breadcrumb
+   */
+  const setupAttempter = new AceCustomizer.createAttemptFunc((targetNode) => {
+    AceCustomizer.setupObserver(targetNode, observationTrigger);
+  }, returnBreadcrumbWhenAvailable);
 
   setupAttempter();
-  
+
+
 }
