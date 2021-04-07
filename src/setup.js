@@ -1,26 +1,37 @@
+/**
+ * 
+ * @param {object} config Setup configuration, see arguments below:
+ * @argument {boolean} config.accordions Should accordions module be activated? - OPTIONAL
+ * @argument {boolean} config.convertLinks Should the inguide-special links module be activated? - OPTIONAL
+ * @argument {string} config.evaluatorSelector The selector for the evaluator element. Could be ".breadcrumb"..
+ * @argument {boolean} config.resultInfoBox Should the result info box module be activated? - OPTIONAL
+ */
 export default function (config) {
   console.log(config);
 
-  function setupResultInfoBox() {
-    const targetList = document.querySelectorAll(".h-portal-list");
-    const configuration = {
-      targetListElement: targetList,
-      stringToQuery: "Ingen resultater",
-      onClickRedirectUrl: "?contact-method=14515",
-      searchKey: "searchkey",
-      infoText:
-        "Vær en ægte Telia helt og super-kollega, og lad os vide at der mangler en guide. Klik blot herunder:",
-      buttonText: "Der mangler en guide!",
-    };
-    const extender = new AceCustomizer.SearchResultExtender(configuration);
+  if (!config.evaluatorSelector) {
+    throw new Error(
+      "Attention! Ace Customizer will not work without the 'readyEvaluator' config property"
+    );
+  }
+
+  const setupResultInfoBox = () => {
+    const extender = new AceCustomizer.SearchResultExtender({
+      targetListElement: document.querySelectorAll(config.resultInfoBox.targetListElement),
+      stringToQuery: config.resultInfoBox.stringToQuery,
+      onClickRedirectUrl: config.resultInfoBox.onClickRedirectUrl,
+      searchKey: config.resultInfoBox.searchKey,
+      infoText: config.resultInfoBox.infoText,
+      buttonText: config.resultInfoBox.buttonText,
+    });
+
     if (!extender.infoBoxExistsAlready()) {
       extender.createInfoBox();
     }
-  }
+  };
 
   // TOOD: REFACTOR - MAKE INTO AREA ON ITS OWN
-  function convertLinksToIcons() {
-
+  const convertLinksToIcons = () => {
     const converter = new AceCustomizer.InGuideLinkConverter({
       guideToQuery: "h-portal-guide.ng-scope",
       guideContentArea: "internversion",
@@ -30,69 +41,30 @@ export default function (config) {
     // TODO: The guide is only found on the second mutation
     // Should probably introduce the attempter here as well
     if (converter.isGuideAvailable()) {
-      console.log("guide is available!")
       converter.convertGuideLinks();
     }
-  }
+  };
 
-  /**
-   * Triggers each time a mutation happens on the selected node
-   */
-  function observationTrigger() {
-    if (config.convertLinks) {
-      convertLinksToIcons();
-    }
-    if (config.accordions) {
-      // This should not run every time on the modal accordions, but only on the guides, or when modal accordion is not activated
-      accordions.init();
-    }
-    if (config.resultInfoBox) {
-      setupResultInfoBox();
-    }
-  }
+  /** This function will be called with every mutation on the selected node */
+  const observationTrigger = () => {
+    config.convertLinks ? convertLinksToIcons() : null;
+    // TODO: This should not run every time on the modal accordions, but only on the guides
+    // ..or when modal accordion is not activated
+    config.accordions ? accordions.init() : null;
+    config.resultInfoBox.activate ? setupResultInfoBox() : null;
+  };
 
-  function evaluator() {
-    var node = document.querySelector(".breadcrumb");
-    if (node) {
-      return node;
-    } else {
-      return false;
-    }
-  }
+  /** The evaluator is used to find out when it's safe to setup the library */
+  const evaluator = () => {
+    const node = document.querySelector(config.evaluatorSelector);
+    return node ? node : false;
+  };
 
-  /**
-   * Args: callback function and the evaluator, which is the function checking for the breadcrumb
-   */
-  const setupAttempter = new AceCustomizer.createAttemptFunc((targetNode) => {
+  /** The callback takes the returned node from evaluator() and starts the observer */
+  const callback = (targetNode) => {
     AceCustomizer.setupObserver(targetNode, observationTrigger);
-  }, evaluator);
+  };
 
-  setupAttempter();
-
-  // DEVELOPMENT FOR CATHRIN
-  document.addEventListener("DOMContentLoaded", function () {
-    const contactMethodDetector = new AceCustomizer.HumanyNotificationDetector({
-      urlQuery: "14515",
-      InputFieldSelector: ".humany-component-value",
-      targetInputName: "hvad-skrev-du-i-sogefeltet",
-      searchKey: "searchkey",
-    });
-
-    // REFACTOR TO USE THE INITIATE ATTEMPT HELPER FUNCTION
-    if (contactMethodDetector.detectUrl()) {
-
-      const attempter = AceCustomizer.createAttemptFunc(
-        contactMethodDetector.setInputFieldValue,
-        () => {
-          const node = document.querySelector(contactMethodDetector.InputFieldSelector);
-          if (node) {
-            return node;
-          } else {
-            return false;
-          }
-        }
-      );
-      attempter();
-    }
-  });
+  /** Start once the evaluator returns a node */
+  new AceCustomizer.createAttemptFunc(callback, evaluator)();
 }

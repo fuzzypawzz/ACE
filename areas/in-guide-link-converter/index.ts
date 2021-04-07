@@ -34,7 +34,7 @@ export default class InGuideLinkConverter {
   }
 
   public convertGuideLinks() {
-    // TODO: FIx bug - Throws error when links has already been converted
+    // TODO: Fix problem - Throws error when links has already been converted
     const guideNode = this.guideNode
       ? this.guideNode
       : this.getGuideNode(`.${this.guideToQuery}`);
@@ -45,13 +45,12 @@ export default class InGuideLinkConverter {
       throw new Error("Guide converter could not finish - no guide was found!");
     } else {
       const contentArea = this.getGuideNode(`#${this.guideContentArea}`);
-      //const nodes: any = contentArea.childNodes;
       const anchorTags = contentArea.querySelectorAll("a");
       console.log(anchorTags);
       if (anchorTags.length == 0) {
         return;
       }
-      // TODO: only make container when the relecant links has been found
+      // TODO: only make container when the relevant links has been found
       const container = document.createElement("div");
       // TODO: Use contants
       container.className = "guide-special-options";
@@ -59,7 +58,7 @@ export default class InGuideLinkConverter {
       anchorTags.forEach((anchorTag) => {
         try {
           if (anchorTag.innerText.includes(specialChar)) {
-            // fjerne chars fra string
+            // Remove any special chars from string, can take an array of chars
             const cleanedText: string = removeSpecialChars(
               anchorTag.innerText,
               [specialChar]
@@ -86,14 +85,11 @@ export default class InGuideLinkConverter {
 
     var spanChild = node.querySelector("span");
     if (spanChild) {
-      // Must not have any text inside, since only the icon should be displayed
+      // Remove any text inside, since only the icon should be displayed
       spanChild.innerText = "";
       spanChild.appendChild(icon);
     } else {
-      //node.innerText = "";
       node.innerText = "";
-      //node.querySelector("a").innerText = "";
-      //node.querySelector("a").appendChild(icon);
       node.appendChild(icon);
     }
     return node;

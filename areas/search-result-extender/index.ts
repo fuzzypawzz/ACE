@@ -77,9 +77,7 @@ export default class SearchResultExtender {
       }
       this.appendInfoBox(element, targetElement);
     } else {
-      throw new Error(
-        `Could not retrieve target element with the text: ${this.stringToQuery}`
-      );
+      return;
     }
   }
 
