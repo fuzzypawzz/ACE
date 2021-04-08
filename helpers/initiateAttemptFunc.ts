@@ -1,18 +1,19 @@
 export default function createAttemptFunc(
   callback: Function,
-  evaluator: Function
+  evaluator: Function,
+  attempts: number = 20,
+  ms: number = 300
 ) {
-  var tryAttempt = 0;
-  var callback = callback;
-  var startOver = () => {
+  let tryAttempt = 0;
+  const startOver = () => {
     attempter();
   };
 
   function attempter() {
-    if (tryAttempt < 20) {
+    if (tryAttempt < attempts) {
       setTimeout(() => {
         // Query to see the nodes availability in the DOM
-        var node = evaluator();
+        const node = evaluator();
         if (node) {
           // Setup mutateObserver
           callback(node);
@@ -20,7 +21,7 @@ export default function createAttemptFunc(
         } else {
           startOver();
         }
-      }, 300);
+      }, ms);
       tryAttempt++;
     } else {
       return;

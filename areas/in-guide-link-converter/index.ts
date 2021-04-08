@@ -1,3 +1,4 @@
+import createAttemptFunc from "../../helpers/initiateAttemptFunc";
 import removeSpecialChars from "../../helpers/removeSpecialChars";
 
 interface IConfiguration {
@@ -45,32 +46,45 @@ export default class InGuideLinkConverter {
       throw new Error("Guide converter could not finish - no guide was found!");
     } else {
       const contentArea = this.getGuideNode(`#${this.guideContentArea}`);
-      const anchorTags = contentArea.querySelectorAll("a");
-      console.log(anchorTags);
-      if (anchorTags.length == 0) {
-        return;
-      }
-      // TODO: only make container when the relevant links has been found
-      const container = document.createElement("div");
-      // TODO: Use contants
-      container.className = "guide-special-options";
-      contentArea.appendChild(container);
-      anchorTags.forEach((anchorTag) => {
-        try {
-          if (anchorTag.innerText.includes(specialChar)) {
-            // Remove any special chars from string, can take an array of chars
-            const cleanedText: string = removeSpecialChars(
-              anchorTag.innerText,
-              [specialChar]
-            );
-            container.appendChild(
-              this.createIconWithLink(`fa fa-${cleanedText}`, anchorTag, "Ekstra information")
-            );
-          }
-        } catch (err) {
-          console.log(err);
+
+      const evaluator = () => {
+        const anchorTags = contentArea.querySelectorAll("a");
+        return anchorTags.length ? anchorTags : false;
+      };
+
+      const callback = (anchorTags: any) => {
+        console.log(anchorTags);
+        if (anchorTags.length == 0) {
+          return;
         }
-      });
+        // TODO: only make container when the relevant links has been found
+        const container = document.createElement("div");
+        // TODO: Use contants
+        container.className = "guide-special-options";
+        contentArea.appendChild(container);
+        anchorTags.forEach((anchorTag: any) => {
+          try {
+            if (anchorTag.innerText.includes(specialChar)) {
+              // Remove any special chars from string, can take an array of chars
+              const cleanedText: string = removeSpecialChars(
+                anchorTag.innerText,
+                [specialChar]
+              );
+              container.appendChild(
+                this.createIconWithLink(
+                  `fa fa-${cleanedText}`,
+                  anchorTag,
+                  "Ekstra information"
+                )
+              );
+            }
+          } catch (err) {
+            console.log(err);
+          }
+        });
+      };
+
+      createAttemptFunc(callback, evaluator, 5, 15)();
     }
   }
 
