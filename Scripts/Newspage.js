@@ -320,7 +320,7 @@ var newsPage = (function() {
 
             // ---- CREATE NEWS ELEMENTS IN THE TOP-10 BLOCK ----
             allNewsContentLenght = allNewsContent.length;
-            let maxNumberOfItemsForSidePanel = 10;
+            let maxNumberOfItemsForSidePanel = 5;
 
             // Check if news items is less than the max number of items allowed in the sidepanel
             if (allNewsContentLenght < maxNumberOfItemsForSidePanel) {
