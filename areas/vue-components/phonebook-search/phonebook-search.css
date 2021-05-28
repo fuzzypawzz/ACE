@@ -25,9 +25,7 @@
 .pb-input__wrapper {
   max-width: 100%;
   min-width: 400px;
-  margin-bottom: 50px;
   position: relative;
-  padding: 0 50px;
 }
 
 .pb-button {
