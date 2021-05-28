@@ -68,8 +68,6 @@ Vue.component("phonebook-search", {
   },
   template: `
       <div class="pb-input__wrapper">
-        <h4>{{ appInfo }}</h4>
-
         <div class="is-flex">
           <input class="pb-input"
             ref="input"
