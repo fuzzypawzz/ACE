@@ -1,0 +1,48 @@
+/* Phonebook search */
+
+.pb--is-flex {
+  display: flex;
+}
+
+.pb-list__item {
+  margin: 20px 0px;
+  list-style-type: none;
+}
+
+.pb-list__item--underlined {
+  border-bottom: 1px solid #edecea;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.pb-input {
+  padding: 10px 20px;
+  font-size: 16px;
+  width: 100%;
+}
+
+.pb-input__wrapper {
+  max-width: 100%;
+  min-width: 400px;
+  margin-bottom: 50px;
+  position: relative;
+  padding: 0 50px;
+}
+
+.pb-button {
+  padding: 0 10px;
+  height: 44px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.pb-container {
+  margin-top: 10px;
+  border: 1px solid;
+  border-radius: 2px;
+  padding: 0 20px;
+  z-index: 1;
+  background: white;
+  width: 100%;
+}
