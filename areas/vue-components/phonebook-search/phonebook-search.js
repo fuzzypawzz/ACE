@@ -1,3 +1,11 @@
+/**
+ * Table search application
+ * Framework: Vue.js
+ * Author: Jannik Maag, Telia Company
+ * Date: 30 May 2021
+ * License: MIT
+ */
+
 Vue.component("table-search", {
   props: {
     tableId: {
