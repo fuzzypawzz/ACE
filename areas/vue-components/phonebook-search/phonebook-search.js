@@ -1,14 +1,14 @@
-Vue.component("phonebook-search", {
+Vue.component("table-search", {
   props: {
     tableId: {
       type: String,
       required: true,
-    },
+    }
   },
 
   data: function () {
     return {
-      phoneBook: undefined,
+      table: undefined,
       tableHeaders: [],
       tableData: [],
       searchValue: "",
@@ -33,13 +33,14 @@ Vue.component("phonebook-search", {
     const table = document.getElementById(this.tableId);
 
     if (!table) {
-      const errorMessage = `No phonebook table was found with id: ${this.tableId}`;
+      const errorMessage = `No table was found with id: ${this.tableId}`;
       this.error.message = errorMessage;
       this.error.show = true;
       throw new Error(errorMessage);
     }
 
-    this.phoneBook = table;
+    this.table = table;
+    this.applyClassNameToTable();
     this.getTableData();
   },
 
@@ -63,7 +64,7 @@ Vue.component("phonebook-search", {
 
   methods: {
     getTableData() {
-      const rows = this.createArrayFrom(this.phoneBook.rows);
+      const rows = this.createArrayFrom(this.table.rows);
 
       rows.forEach((row) => {
         const entry = {};
@@ -90,23 +91,27 @@ Vue.component("phonebook-search", {
     containsOnlySpaces(string) {
       if (!string.trim()) return true;
     },
+
+    applyClassNameToTable() {
+      this.table.className += " ts-table";
+    }
   },
 
   template: `
-      <div class="pb-input__wrapper">
+      <div class="ts-input__wrapper">
         <div class="is-flex">
-          <input class="pb-input"
+          <input class="ts-input"
             ref="input"
             placeholder="Søg i telefonbogen.."
             v-model="searchValue" />
-          <button class="pb-button" v-on:click="resetSearch">
+          <button class="ts-button" v-on:click="resetSearch">
               Nulstil
           </button>
         </div>
 
-        <ul class="pb-container" v-if="searchResults.length">
-          <li :key="i" class="pb-list__item" v-for="(result, i) in searchResults">
-            <div class="pb-list__item--underlined">
+        <ul class="ts-container" v-if="searchResults.length">
+          <li :key="i" class="ts-list__item" v-for="(result, i) in searchResults">
+            <div class="ts-list__item--underlined">
               {{ result[columns.name] }}
             </div>
             <div>Telefonnr: {{ result[columns.phone] }}</div>
@@ -120,7 +125,7 @@ Vue.component("phonebook-search", {
           Ingen resultater fundet for: {{ searchValue }}
         </span>
 
-        <span v-if="error.show" class="pb-error">
+        <span v-if="error.show" class="ts-error">
           {{ error.message }}
         </span>
       </div>

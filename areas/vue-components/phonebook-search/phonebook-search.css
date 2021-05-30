@@ -1,48 +1,77 @@
 /* Phonebook search */
+/* .ts = table search */
 
-.pb--is-flex {
+.ts-table p {
+  margin: unset;
+  padding: unset;
+}
+
+.ts-table thead tr {
+    background-color: #9908E2;
+    color: #ffffff;
+    text-align: left;
+}
+
+.ts-table th,
+.ts-table td {
+    padding: 12px 15px;
+}
+
+.ts-table tr {
+    border-bottom: thin solid #dddddd;
+}
+
+.ts-table tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+.ts-table tr:last-of-type {
+    border-bottom: 3px solid #9908E2;
+}
+
+.ts--is-flex {
   display: flex;
 }
 
-.pb-list__item {
+.ts-list__item {
   margin: 20px 0px;
   list-style-type: none;
 }
 
-.pb-list__item--underlined {
+.ts-list__item--underlined {
   border-bottom: 1px solid #edecea;
   padding-bottom: 4px;
   margin-bottom: 4px;
   font-weight: 600;
 }
 
-.pb-input {
+.ts-input {
   padding: 10px 20px;
   font-size: 16px;
   width: 100%;
 }
 
 /* Error message to show when table is not found */
-.pb-error {
+.ts-error {
   color: rgb(235, 0, 0);
   font-weight: 700;
   font-size: 16px;
 }
 
-.pb-input__wrapper {
+.ts-input__wrapper {
   max-width: 100%;
   min-width: 400px;
   position: relative;
 }
 
-.pb-button {
+.ts-button {
   padding: 0 10px;
   height: 44px;
   cursor: pointer;
   margin-left: 10px;
 }
 
-.pb-container {
+.ts-container {
   margin-top: 10px;
   border: 1px solid;
   border-radius: 2px;
@@ -50,4 +79,5 @@
   z-index: 1;
   background: white;
   width: 100%;
+  position: absolute;
 }
