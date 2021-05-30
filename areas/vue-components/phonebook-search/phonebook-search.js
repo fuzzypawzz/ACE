@@ -65,7 +65,7 @@ Vue.component("table-search", {
         `;
         return searchString
           .toUpperCase()
-          .includes(this.searchValue.toUpperCase());
+          .includes(this.searchValue.toUpperCase().trim());
       });
     },
   },
