@@ -11,6 +11,10 @@ Vue.component("table-search", {
     tableId: {
       type: String,
       required: true,
+    },
+    hasHeaders: {
+      type: Boolean,
+      default: true
     }
   },
 
@@ -20,7 +24,6 @@ Vue.component("table-search", {
       tableHeaders: [],
       tableData: [],
       searchValue: "",
-      firstRowIsHeaders: false,
       error: {
         message: undefined,
         show: false,
@@ -72,7 +75,10 @@ Vue.component("table-search", {
 
   methods: {
     getTableData() {
-      const rows = this.createArrayFrom(this.table.rows);
+      let rows = this.createArrayFrom(this.table.rows);
+      if (this.hasHeaders) {
+        rows = this.removeFirstRow(rows);
+      };
 
       rows.forEach((row) => {
         const entry = {};
@@ -96,13 +102,18 @@ Vue.component("table-search", {
       return Array.from(dataCollection);
     },
 
+    removeFirstRow(array) {
+      array.shift();
+      return array;
+    },
+
     containsOnlySpaces(string) {
       if (!string.trim()) return true;
     },
 
     applyClassNameToTable() {
       this.table.className += " ts-table";
-    }
+    },
   },
 
   template: `
