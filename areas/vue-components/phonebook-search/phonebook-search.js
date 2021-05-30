@@ -5,33 +5,55 @@ Vue.component("phonebook-search", {
       required: true,
     },
   },
+
   data: function () {
     return {
       phoneBook: undefined,
       tableHeaders: [],
       tableData: [],
       searchValue: "",
+      firstRowIsHeaders: false,
+      error: {
+        message: undefined,
+        show: false,
+      },
+      columns: {
+        name: "name",
+        phone: "phone",
+        external: "external",
+        email: "email",
+        note: "note",
+      },
     };
   },
+
   mounted() {
-    try {
-      // This element might not be inside the Vue app element, so we can't use 'vm.$refs'
-      this.phoneBook = document.getElementById(this.tableId);
-    } catch (error) {
-      console.log(error);
+    // If you're table is not a nested element inside your Vue instance,
+    // then don't use vm.$refs, but target the table with the id selector instead
+    const table = document.getElementById(this.tableId);
+
+    if (!table) {
+      const errorMessage = `No phonebook table was found with id: ${this.tableId}`;
+      this.error.message = errorMessage;
+      this.error.show = true;
+      throw new Error(errorMessage);
     }
-    // Might be used later
-    //this.getTableHeaders();
+
+    this.phoneBook = table;
     this.getTableData();
   },
 
   computed: {
     searchResults() {
-      if (this.searchValue == "") {
-        return [];
-      }
+      if (this.containsOnlySpaces(this.searchValue)) return [];
+
       return this.tableData.filter((item) => {
-        const searchString = `${item.name} ${item.phone} ${item.ext} ${item.mail}`;
+        const searchString = `
+          ${item[this.columns.name]}
+          ${item[this.columns.phone]}
+          ${item[this.columns.external]}
+          ${item[this.columns.email]}
+        `;
         return searchString
           .toUpperCase()
           .includes(this.searchValue.toUpperCase());
@@ -40,32 +62,36 @@ Vue.component("phonebook-search", {
   },
 
   methods: {
-    // Might be used later
-    // getTableHeaders() {
-    //   const rows = Array.from(this.phoneBook.rows);
-    //   this.tableHeaders = Array.from(rows[0].children);
-    // },
     getTableData() {
-      const rows = Array.from(this.phoneBook.rows);
+      const rows = this.createArrayFrom(this.phoneBook.rows);
+
       rows.forEach((row) => {
-        this.tableData.push({
-          name: row.children[0].innerText,
-          phone: row.children[1].innerText,
-          ext: row.children[2].innerText,
-          mail: row.children[3].innerText,
-          note: row.children[4].innerText,
-        });
+        const entry = {};
+        const columnKeys = Object.keys(this.columns);
+
+        for (i = 0; i < columnKeys.length; i++) {
+          entry[columnKeys[i]] = row.children[i]
+            ? row.children[i].innerText
+            : null;
+        }
+        this.tableData.push(entry);
       });
     },
+
     resetSearch() {
       this.searchValue = "";
-      try {
-        this.$refs.input.focus();
-      } catch (e) {
-        console.log(e);
-      }
+      this.$refs.input.focus();
+    },
+
+    createArrayFrom(dataCollection) {
+      return Array.from(dataCollection);
+    },
+
+    containsOnlySpaces(string) {
+      if (!string.trim()) return true;
     },
   },
+
   template: `
       <div class="pb-input__wrapper">
         <div class="is-flex">
@@ -73,21 +99,29 @@ Vue.component("phonebook-search", {
             ref="input"
             placeholder="Søg i telefonbogen.."
             v-model="searchValue" />
-          <button class="pb-button" v-on:click="resetSearch">Nulstil</button>
+          <button class="pb-button" v-on:click="resetSearch">
+              Nulstil
+          </button>
         </div>
 
         <ul class="pb-container" v-if="searchResults.length">
-          <li :key="i" class="pb-list__item" v-for="(item, i) in searchResults">
-            <div class="pb-list__item--underlined">{{ item.name }}</div>
-            <div>Telefon: {{ item.phone }}</div>
-            <div>Eksternt nummer: {{ item.ext }}</div>
-            <div>Email: {{ item.mail }}</div>
-            <div>Bemærkning: {{ item.note }}</div>
+          <li :key="i" class="pb-list__item" v-for="(result, i) in searchResults">
+            <div class="pb-list__item--underlined">
+              {{ result[columns.name] }}
+            </div>
+            <div>Telefonnr: {{ result[columns.phone] }}</div>
+            <div>Ekstern: {{ result[columns.external] }}</div>
+            <div>Mail: {{ result[columns.email] }}</div>
+            <div>Bemærkninger: {{ result[columns.note] }}</div>
           </li>
         </ul>
 
-        <span v-else-if="searchValue && searchResults.length == 0">
+        <span v-else-if="!containsOnlySpaces(searchValue) && searchResults.length == 0">
           Ingen resultater fundet for: {{ searchValue }}
+        </span>
+
+        <span v-if="error.show" class="pb-error">
+          {{ error.message }}
         </span>
       </div>
     `,

@@ -22,6 +22,13 @@
   width: 100%;
 }
 
+/* Error message to show when table is not found */
+.pb-error {
+  color: rgb(235, 0, 0);
+  font-weight: 700;
+  font-size: 16px;
+}
+
 .pb-input__wrapper {
   max-width: 100%;
   min-width: 400px;
