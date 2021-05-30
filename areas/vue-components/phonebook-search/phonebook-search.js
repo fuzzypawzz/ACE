@@ -14,8 +14,8 @@ Vue.component("table-search", {
     },
     hasHeaders: {
       type: Boolean,
-      default: true
-    }
+      default: true,
+    },
   },
 
   data: function () {
@@ -78,7 +78,7 @@ Vue.component("table-search", {
       let rows = this.createArrayFrom(this.table.rows);
       if (this.hasHeaders) {
         rows = this.removeFirstRow(rows);
-      };
+      }
 
       rows.forEach((row) => {
         const entry = {};
@@ -117,7 +117,7 @@ Vue.component("table-search", {
   },
 
   template: `
-      <div class="ts-input__wrapper">
+      <div class="ts-input__wrapper ts-input__wrapper--margin-below">
         <div class="is-flex">
           <input class="ts-input"
             ref="input"

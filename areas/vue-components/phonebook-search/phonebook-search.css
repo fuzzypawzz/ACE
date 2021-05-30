@@ -68,6 +68,10 @@
   position: relative;
 }
 
+.ts-input__wrapper--margin-below {
+  margin-bottom: 20px;
+}
+
 .ts-button {
   padding: 0 10px;
   height: 44px;
