@@ -102,6 +102,9 @@ Vue.component("news-page", {
       },
       constants: {
         newsFromTodayText: "Nyhed fra i dag",
+        pebble:
+          "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png",
+        heartIcon: "fa fa-heart"
       },
     };
   },
@@ -117,7 +120,6 @@ Vue.component("news-page", {
     //   element: this.latestNewsBlock,
     //   display: true,
     // });
-    console.log(this.getNewsTag("BUSINESS"));
   },
 
   computed: {},
@@ -164,6 +166,11 @@ Vue.component("news-page", {
             ? row.children[i].innerHTML
             : null;
         }
+        // Map rest of expected keys, else vue template will not work properly
+        entry.icon = '';
+        entry.dateText = '';
+        entry.tag = '';
+        entry.publishedDate = '';
         this.state.newsData.push(entry);
       });
     },
@@ -362,12 +369,15 @@ Vue.component("news-page", {
         }
 
         newsArticle.tag = this.getNewsTag(newsArticle[this.columns["author"]]);
+
+        // TODO: Check if this is required for anything
+        newsArticle.icon = this.constants.heartIcon;
       });
     },
 
     getNewsTag(authorName) {
       const options = this.newsTagOptions;
-      let foundTag = 'DEFAULT'
+      let foundTag = "DEFAULT";
 
       options.isSU.forEach((tag) => {
         if (authorName.includes(tag)) {
@@ -387,18 +397,112 @@ Vue.component("news-page", {
         }
       });
 
-      if (foundTag == 'DEFAULT') {
-        console.log(this.authorName)
-      }
-
       return foundTag;
     },
   },
 
   template: `
   <div>
-    <div v-for="(guide, i) in guides" :key="i">{{ guide }}</div>
-    <div>{{ state.newsData }}</div>
+    <section class="news-selection-panel">
+      <div class="news-selection-header">
+        <h2 class="news-headline">Filtrer nyneder</h2>
+        <p>Vælg din nyhedskilde</p>
+      </div>
+
+      <div class="news-selection-selectors">
+        <select
+          class="news-month-selector"
+          disabled="disabled"
+          style="cursor: not-allowed"
+          id="_news-month-selector"
+        >
+          <option>Se alle nyheder</option>
+          <option>Kun nyheder om kunde pains</option>
+          <option>Kun udmeldinger fra SU</option>
+        </select>
+      </div>
+
+      <div class="news-selection-subheader">
+        <h3 class="news-headline">Søg i arkivet</h3>
+        <p>Søg på overskrift, måned, år</p>
+      </div>
+      <div class="news-selection-search" id="_news-selection-search">
+        <input
+          class="news-selection-searchfield humany-search-style"
+          id="_news-selection-searchfield"
+          placeholder="Søg.."
+        />
+        <svg
+          class="humany-search-ts-icon"
+          id="_humany-search-ts-icon"
+          style="width: 40px; display: block"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 30 30"
+        >
+          <path
+            d="M29.2 29.2a2.72 2.72 0 0 1-3.86 0L21.16 25A13.64 13.64 0 1 1 25 21.16l4.19 4.18a2.72 2.72 0 0 1 .01 3.86zM13.64 3.41a10.23 10.23 0 1 0 0 20.45 10.16 10.16 0 0 0 7.23-3 10.26 10.26 0 0 0 0-14.47 10.16 10.16 0 0 0-7.23-3"
+          ></path>
+        </svg>
+        <svg
+          class="humany-delete-ts-icon"
+          id="_humany-delete-ts-icon"
+          style="display: none; width: 40px"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 30 30"
+        >
+          <title>delete-ts-icon</title>
+          <g id="Layer_2" data-name="Layer 2">
+            <g id="Layer_1-2" data-name="Layer 1">
+              <path
+                d="M21.63,15l7-7A4.69,4.69,0,0,0,22,1.37l-7,7-7-7A4.69,4.69,0,0,0,1.37,8l7,7-7,7A4.69,4.69,0,0,0,8,28.63l7-7,7,7A4.69,4.69,0,0,0,28.63,22Z"
+              ></path>
+            </g>
+          </g>
+        </svg>
+      </div>
+      <div
+        style="
+          height: 40px;
+          width: 344px;
+          background-repeat: no-repeat;
+          background-size: contain;
+          background-image: url(/Interfaces/Portal/Customer/Ace/logo.png);
+          position: absolute;
+          bottom: 30px;
+          left: 30px;
+        "
+      ></div>
+    </section>
+
+    <div class="newsSection-wrapper">
+
+      <div v-cloak v-for="(article, i) in state.newsData" :key="i" class="newsblock-01-wrapper">
+        <section class="newsblock-01-header">
+          <div class="newsblock-01-logo">
+            <i v-if="article.icon && article.icon !== '&nbsp;'" :class="article.icon"></i>
+          </div>
+
+          <div class="newsblock-01-infos">
+            <h2 class="newsblock-01-headline news-headline pebble-purple">{{ article.author }}</h2>
+            <h3 class="newsblock-01-date"> {{ article.dateText }} </h3>
+          </div>
+        </section>
+
+        <section class="newsblock-01-content">
+          <h3 class="newsblock-content-headline">{{ article.headline }}</h3>
+          <section class="newsblock-content-p" v-html="article.description"></section>
+        </section>
+
+        <section v-if="article.images && article.images !== '&nbsp;'"
+          v-html="article.images"
+          class="newsblock-01-photos">
+        </section>
+
+        <section v-if="article.links && article.links !== '&nbsp;'" class="newsblock-01-refs"
+          v-html="article.links">
+        </section>
+      </div>
+    </div>
   </div>
-    `,
+  `,
 });
