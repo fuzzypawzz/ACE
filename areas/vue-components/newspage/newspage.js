@@ -26,9 +26,11 @@ Vue.component("news-page", {
       state: {
         newsData: [],
         data: undefined,
+        newsFromTodayCount: 0,
       },
       latestNewsBlock: undefined,
       tableContainsHeaders: true,
+      todaysDate: Object,
       columns: {
         day: "day",
         month: "month",
@@ -70,6 +72,37 @@ Vue.component("news-page", {
         nov: "November",
         dec: "December",
       },
+      newsTagOptions: {
+        isSU: [
+          "SU",
+          "S U",
+          "S.U",
+          "S. U",
+          "SUPERUSER",
+          "SUPER",
+          "USER",
+          "BRUGER",
+        ], // Determines that it is SU, if any of these is matching
+        isBusinessQuality: [
+          "BOQ",
+          "QUALITY",
+          "BUSINESS",
+          "OPTIMI",
+          "ZATION",
+          "PAIN",
+          "LØST",
+          "PCES",
+          "PCS",
+          "PCE",
+        ], // Determines that it is BOQ, if any of these is mathing
+        isVIP: ["VIP", "ENTERPRISE", "VIP TEAM"],
+        SU_TAG: "SU", // Sets this as tag if article is made by SU
+        BOQ_TAG: "BUSINESS QUALITY AND OPTIMIZATION", // Sets this as tag if article is made by BOQ
+        VIP_TAG: "VIP", // Sets this as tag if article is made by VIP TEAM
+      },
+      constants: {
+        newsFromTodayText: "Nyhed fra i dag",
+      },
     };
   },
 
@@ -78,11 +111,13 @@ Vue.component("news-page", {
   },
 
   mounted() {
+    this.todaysDate = this.getTodaysDate();
     this.setLatestNewsBlockElement();
     // this.changeInlineDisplayStyle({
     //   element: this.latestNewsBlock,
     //   display: true,
     // });
+    console.log(this.getNewsTag("BUSINESS"));
   },
 
   computed: {},
@@ -100,7 +135,10 @@ Vue.component("news-page", {
               id: this.tableId,
             })
           )
-        );
+        )
+        .then(() => {
+          this.washNewsData();
+        });
     },
 
     queryTableElement({ html, id }) {
@@ -125,7 +163,6 @@ Vue.component("news-page", {
           entry[columnKeys[i]] = row.children[i]
             ? row.children[i].innerHTML
             : null;
-          console.log(row.children[i]);
         }
         this.state.newsData.push(entry);
       });
@@ -157,7 +194,10 @@ Vue.component("news-page", {
 
     removeEmptyValue(string) {
       // Except content text (description in my data)
-      return string.replace(/&nbsp;/g, "");
+      // console.log(string)
+      // string = string.replace(/&nbsp;/g, "");
+      // console.log(string);
+      return string;
     },
 
     removeTagsInString(string) {
@@ -240,6 +280,118 @@ Vue.component("news-page", {
       if (display === undefined) return new Error("You must specify an action");
       if (display) element.style.display = "block";
       else element.style.display = "none";
+    },
+
+    scrollToElement(elementId) {
+      const target = document.querySelector(`#${elementId}`);
+      if (!target) return new Error("Could not locate element to scroll to.");
+      // TODO: Find out why -70 ??
+      target.parentNode.scrollTop = target.offsetTop - 70;
+    },
+
+    /**
+     *
+     * @param {date object} firstDate
+     * @param {date object} secondDate
+     * @description Returns true if the objects has the same date
+     */
+    isDateTheSame(firstDate, secondDate) {
+      return (
+        firstDate.getFullYear() === secondDate.getFullYear() &&
+        firstDate.getMonth() === secondDate.getMonth() &&
+        firstDate.getDate() === secondDate.getDate()
+      );
+    },
+
+    getTodaysDate() {
+      const date = new Date();
+      // Add 1, since the translation index starts at: 1 = January
+      const translatedMonth = this.translateToEnglishMonth(date.getMonth() + 1);
+      return new Date(
+        `${translatedMonth}, ${date.getDate()}, ${date.getFullYear()} 00:00:00`
+      );
+    },
+
+    washNewsData() {
+      this.state.newsData.forEach((newsArticle) => {
+        // Perform default things for all values in article
+        Object.keys(this.columns).forEach((columnKey) => {
+          let value = newsArticle[columnKey];
+          //value = this.removeEmptyValue(value).trim();
+
+          // To keep the app from crashing if day or month or year does not exist,
+          // set a default value
+          if (!value && columnKey === this.columns["day"]) {
+            const fallbackDay = "1";
+            value = fallbackDay;
+          }
+
+          if (columnKey === this.columns["month"]) {
+            if (!value) {
+              const fallbackMonth = "January";
+              value = fallbackMonth;
+            } else value = this.translateToEnglishMonth(value);
+          }
+
+          if (columnKey === this.columns["year"]) {
+            if (!value) {
+              const fallbackYear = "2050";
+              value = fallbackYear;
+            }
+          }
+
+          if (!value && columnKey === this.columns["author"]) {
+            const fallbackAuthor = "Redaktøren";
+            value = fallbackAuthor;
+          }
+        });
+
+        const articleDay = newsArticle[this.columns["day"]];
+        const articleMonth = newsArticle[this.columns["month"]];
+        const articleYear = newsArticle[this.columns["year"]];
+
+        newsArticle.publishedDate = new Date(
+          `${articleMonth}, ${articleDay}, ${articleYear} 00:00:00`
+        );
+
+        if (this.isDateTheSame(newsArticle.publishedDate, this.todaysDate)) {
+          this.newsFromTodayCount++;
+          newsArticle.dateText = this.constants.newsFromTodayText;
+        } else {
+          newsArticle.dateText = `${articleDay} ${articleMonth} ${articleYear}`;
+        }
+
+        newsArticle.tag = this.getNewsTag(newsArticle[this.columns["author"]]);
+      });
+    },
+
+    getNewsTag(authorName) {
+      const options = this.newsTagOptions;
+      let foundTag = 'DEFAULT'
+
+      options.isSU.forEach((tag) => {
+        if (authorName.includes(tag)) {
+          foundTag = options.SU_TAG;
+        }
+      });
+
+      options.isBusinessQuality.forEach((tag) => {
+        if (authorName.includes(tag)) {
+          foundTag = options.BOQ_TAG;
+        }
+      });
+
+      options.isVIP.forEach((tag) => {
+        if (authorName.includes(tag)) {
+          foundTag = options.VIP_TAG;
+        }
+      });
+
+      if (foundTag == 'DEFAULT') {
+        console.log(this.authorName)
+      }
+
+      return foundTag;
     },
   },
 
