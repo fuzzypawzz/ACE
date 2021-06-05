@@ -106,7 +106,7 @@ Vue.component("news-page", {
         newsFromTodayText: "Nyhed fra i dag",
         pebble:
           "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png",
-        heartIcon: "fa fa-heart"
+        heartIcon: "fa fa-heart",
       },
     };
   },
@@ -169,10 +169,10 @@ Vue.component("news-page", {
             : null;
         }
         // Map rest of expected keys, else vue template will not work properly
-        entry.icon = '';
-        entry.dateText = '';
-        entry.tag = '';
-        entry.publishedDate = '';
+        entry.icon = "";
+        entry.dateText = "";
+        entry.tag = "";
+        entry.publishedDate = "";
         this.state.newsData.push(entry);
       });
     },
@@ -181,14 +181,13 @@ Vue.component("news-page", {
       const data = [];
       const headers = [];
 
-      // ---- GET THE INNER HTML FROM THE HEADER ROWS ----
-      // And remove all whitespaces
+      // GET THE INNER HTML FROM THE HEADER ROWS
       for (let i = 0; i < table.rows[0].cells.length; i++) {
         //headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
         headers[i] = table.rows[0].cells[i].id.toLowerCase().replace(/ /gi, "");
       }
 
-      // ---- GET INNER HTML FROM ALL ROWS, EXCLUDING THE TOP ROW (HEADERS) ----
+      // GET INNER HTML FROM ALL ROWS, EXCLUDING THE TOP ROW (HEADERS)
       // Index starts at 1, since we already has the headers
       for (let i = 1; i < table.rows.length; i++) {
         var tableRow = table.rows[i];
@@ -203,7 +202,7 @@ Vue.component("news-page", {
 
     removeEmptyValue(string) {
       // Except content text (description in my data)
-      console.log(string)
+      console.log(string);
       string = string.replace(/&nbsp;/g, "");
       console.log(string);
       return string;
@@ -273,7 +272,12 @@ Vue.component("news-page", {
       });
     },
 
-    // required for search
+    /**
+     * 
+     * @param {string} string
+     * @description returns true if the string only contains spaces and nothing else
+     * @returns Boolean
+     */
     containsOnlySpaces(string) {
       if (!string.trim()) return true;
     },
@@ -291,6 +295,13 @@ Vue.component("news-page", {
       else element.style.display = "none";
     },
 
+    /**
+     * 
+     * @name scrollToElement
+     * @param {string} elementId 
+     * @description Scrolls to the selected element in the document
+     * @returns void
+     */
     scrollToElement(elementId) {
       const target = document.querySelector(`#${elementId}`);
       if (!target) return new Error("Could not locate element to scroll to.");
@@ -300,8 +311,8 @@ Vue.component("news-page", {
 
     /**
      *
-     * @param {date object} firstDate
-     * @param {date object} secondDate
+     * @param {Date} firstDate Date object
+     * @param {Date} secondDate Date object
      * @description Returns true if the objects has the same date
      */
     isDateTheSame(firstDate, secondDate) {
@@ -312,6 +323,11 @@ Vue.component("news-page", {
       );
     },
 
+    /**
+     *
+     * @name getTodaysDate
+     * @returns a Date object with todays date
+     */
     getTodaysDate() {
       const date = new Date();
       // Add 1, since the translation index starts at: 1 = January
@@ -320,11 +336,12 @@ Vue.component("news-page", {
         `${translatedMonth}, ${date.getDate()}, ${date.getFullYear()} 00:00:00`
       );
     },
-    
+
     /**
-     * 
+     *
      * @name washNewsData
-     * @description The mothod
+     * @description Cleans up all news data for empty spaces and spelling mistakes to some extend
+     * @returns void
      */
     washNewsData() {
       this.state.newsData.forEach((newsArticle) => {
