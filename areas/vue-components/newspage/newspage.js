@@ -1,9 +1,11 @@
 /**
- * Custom newspage cmponent
- * Framework: Vue.js
- * Author: Jannik Maag, Telia Company
- * Date: 05 June 2021
- * License: MIT
+ * 
+ * @name Ace newspage
+ * @author Jannik Maag - Github@Fuzzypawzz
+ * @license MIT, open source
+ * @language Vue.js (JavaScript)
+ * @version 4.0
+ * @description Custom newspage application, made as a Vue Component
  */
 
 Vue.component("news-page", {
@@ -201,9 +203,9 @@ Vue.component("news-page", {
 
     removeEmptyValue(string) {
       // Except content text (description in my data)
-      // console.log(string)
-      // string = string.replace(/&nbsp;/g, "");
-      // console.log(string);
+      console.log(string)
+      string = string.replace(/&nbsp;/g, "");
+      console.log(string);
       return string;
     },
 
@@ -318,13 +320,18 @@ Vue.component("news-page", {
         `${translatedMonth}, ${date.getDate()}, ${date.getFullYear()} 00:00:00`
       );
     },
-
+    
+    /**
+     * 
+     * @name washNewsData
+     * @description The mothod
+     */
     washNewsData() {
       this.state.newsData.forEach((newsArticle) => {
         // Perform default things for all values in article
         Object.keys(this.columns).forEach((columnKey) => {
           let value = newsArticle[columnKey];
-          //value = this.removeEmptyValue(value).trim();
+          value = this.removeEmptyValue(value).trim();
 
           // To keep the app from crashing if day or month or year does not exist,
           // set a default value
@@ -351,6 +358,8 @@ Vue.component("news-page", {
             const fallbackAuthor = "Redaktøren";
             value = fallbackAuthor;
           }
+
+          newsArticle[columnKey] = value;
         });
 
         const articleDay = newsArticle[this.columns["day"]];
