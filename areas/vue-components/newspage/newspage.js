@@ -1,5 +1,5 @@
 /**
- * 
+ *
  * @name Ace newspage
  * @author Jannik Maag - Github@Fuzzypawzz
  * @license MIT, open source
@@ -27,7 +27,6 @@ Vue.component("news-page", {
     return {
       state: {
         newsData: [],
-        data: undefined,
         newsFromTodayCount: 0,
       },
       latestNewsBlock: undefined,
@@ -43,6 +42,7 @@ Vue.component("news-page", {
         images: "images",
         links: "links",
       },
+      fieldsToBeGenerated: ["icon", "dateText", "tag", "publishedDate"],
       tableId: ".humany-notify-table",
       months: {
         jan: "january",
@@ -112,7 +112,7 @@ Vue.component("news-page", {
   },
 
   created() {
-    this.getGuideBodyContent(this.guides[1]);
+    this.guides.forEach((guide) => this.getGuideBodyContent(guide));
   },
 
   mounted() {
@@ -132,14 +132,14 @@ Vue.component("news-page", {
         .get(
           `https://telia-dk.humany.net/${this.interfaceName}/guides/${guideId}?language=da&credentials=true`
         )
-        .then((response) =>
+        .then((response) => {
           this.parseDataInTableElement(
             this.queryTableElement({
               html: response.data.Body,
               id: this.tableId,
             })
-          )
-        )
+          );
+        })
         .then(() => {
           this.washNewsData();
         });
@@ -168,11 +168,12 @@ Vue.component("news-page", {
             ? row.children[i].innerHTML
             : null;
         }
-        // Map rest of expected keys, else vue template will not work properly
-        entry.icon = "";
-        entry.dateText = "";
-        entry.tag = "";
-        entry.publishedDate = "";
+
+        // Initialise new keys in data, else the Vue Template won't work properly
+        this.fieldsToBeGenerated.forEach(field => {
+          entry[field] = '';
+        })
+
         this.state.newsData.push(entry);
       });
     },
@@ -202,9 +203,7 @@ Vue.component("news-page", {
 
     removeEmptyValue(string) {
       // Except content text (description in my data)
-      console.log(string);
       string = string.replace(/&nbsp;/g, "");
-      console.log(string);
       return string;
     },
 
@@ -273,7 +272,7 @@ Vue.component("news-page", {
     },
 
     /**
-     * 
+     *
      * @param {string} string
      * @description returns true if the string only contains spaces and nothing else
      * @returns Boolean
@@ -296,9 +295,9 @@ Vue.component("news-page", {
     },
 
     /**
-     * 
+     *
      * @name scrollToElement
-     * @param {string} elementId 
+     * @param {string} elementId
      * @description Scrolls to the selected element in the document
      * @returns void
      */
@@ -396,8 +395,10 @@ Vue.component("news-page", {
 
         newsArticle.tag = this.getNewsTag(newsArticle[this.columns["author"]]);
 
-        // TODO: Check if this is required for anything
+        // TODO: Handle icons, not all should be hearts
         newsArticle.icon = this.constants.heartIcon;
+
+        // INFO: IF ADDING MORE NEW FIELDS HERE, REMEMBER TO ADD THE FIELD TO list: fieldsToBeGenerated
       });
     },
 
@@ -515,7 +516,7 @@ Vue.component("news-page", {
         </section>
 
         <section class="newsblock-01-content">
-          <h3 class="newsblock-content-headline">{{ article.headline }}</h3>
+          <h3 class="newsblock-content-headline" v-html="article.headline"></h3>
           <section class="newsblock-content-p" v-html="article.description"></section>
         </section>
 
