@@ -87,6 +87,10 @@ Vue.component("news-page", {
         ], // Determines that it is SU, if any of these is matching
         isBusinessQuality: [
           "BOQ",
+          "PAINTEAMET",
+          "PAINTEAM",
+          "PAIN TEAMET",
+          "PAIN TEAM",
           "QUALITY",
           "BUSINESS",
           "OPTIMI",
@@ -106,7 +110,8 @@ Vue.component("news-page", {
         newsFromTodayText: "Nyhed fra i dag",
         pebble:
           "https://humany.blob.core.windows.net/telia-dk/guides/pebble2.png",
-        heartIcon: "fa fa-heart",
+        heartIcon: "fa fa-heart cmRed",
+        infoIcon: "fa fa-info-circle tsPurple",
       },
     };
   },
@@ -142,6 +147,12 @@ Vue.component("news-page", {
         })
         .then(() => {
           this.washNewsData();
+
+          // TODO: Find another way to sort data, maybe computed property
+          // Check find store application for the shop-sorting
+          this.state.newsData.sort(function (a, b) {
+            return b.publishedDate - a.publishedDate;
+          });
         });
     },
 
@@ -170,9 +181,9 @@ Vue.component("news-page", {
         }
 
         // Initialise new keys in data, else the Vue Template won't work properly
-        this.fieldsToBeGenerated.forEach(field => {
-          entry[field] = '';
-        })
+        this.fieldsToBeGenerated.forEach((field) => {
+          entry[field] = "";
+        });
 
         this.state.newsData.push(entry);
       });
@@ -381,6 +392,7 @@ Vue.component("news-page", {
         const articleDay = newsArticle[this.columns["day"]];
         const articleMonth = newsArticle[this.columns["month"]];
         const articleYear = newsArticle[this.columns["year"]];
+        const author = newsArticle[this.columns["author"]];
 
         newsArticle.publishedDate = new Date(
           `${articleMonth}, ${articleDay}, ${articleYear} 00:00:00`
@@ -393,10 +405,8 @@ Vue.component("news-page", {
           newsArticle.dateText = `${articleDay} ${articleMonth} ${articleYear}`;
         }
 
-        newsArticle.tag = this.getNewsTag(newsArticle[this.columns["author"]]);
-
-        // TODO: Handle icons, not all should be hearts
-        newsArticle.icon = this.constants.heartIcon;
+        newsArticle.tag = this.getNewsTag(author);
+        newsArticle.icon = this.getIconClassName(author);
 
         // INFO: IF ADDING MORE NEW FIELDS HERE, REMEMBER TO ADD THE FIELD TO list: fieldsToBeGenerated
       });
@@ -425,6 +435,18 @@ Vue.component("news-page", {
       });
 
       return foundTag;
+    },
+
+    getIconClassName(authorName) {
+      let iconClass = this.constants.infoIcon;
+
+      this.newsTagOptions.isBusinessQuality.forEach((tag) => {
+        if (authorName.includes(tag)) {
+          iconClass = this.constants.heartIcon;
+        }
+      });
+
+      return iconClass;
     },
   },
 
@@ -506,7 +528,9 @@ Vue.component("news-page", {
       <div v-cloak v-for="(article, i) in state.newsData" :key="i" class="newsblock-01-wrapper">
         <section class="newsblock-01-header">
           <div class="newsblock-01-logo">
-            <i v-if="article.icon && article.icon !== '&nbsp;'" :class="article.icon"></i>
+            <i v-if="article.icon && article.icon !== '&nbsp;'"
+              :class="article.icon"
+              class="ace-np-header__fa-icon"></i>
           </div>
 
           <div class="newsblock-01-infos">
