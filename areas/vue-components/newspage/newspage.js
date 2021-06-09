@@ -62,20 +62,18 @@ Vue.component("news-page", {
         nov: "november",
         dec: "december",
       },
-      
+
       monthsInDanish: {
         jan: "Januar",
         feb: "Februar",
         mar: "Marts",
         apr: "April",
         maj: "Maj",
-        may: "Maj",
         jun: "Juni",
         jul: "Juli",
         aug: "August",
         sept: "September",
         okt: "Oktober",
-        oct: "Oktober",
         nov: "November",
         dec: "December",
       },
@@ -164,6 +162,9 @@ Vue.component("news-page", {
 
           // TODO: Find another way to sort data, maybe computed property
           // Check find store application for the shop-sorting
+          this.state.newsData.sort(function (a, b) {
+            return b.publishedDate - a.publishedDate;
+          });
         });
     },
 
@@ -269,7 +270,7 @@ Vue.component("news-page", {
       let match = this.fallbackMonth;
 
       if (isNaN(string)) {
-        Object.keys(this.months).forEach(monthAbbrivation => {
+        Object.keys(this.months).forEach((monthAbbrivation) => {
           if (
             // if the large string includes one of the abbr.
             string.toLowerCase().includes(monthAbbrivation.toLowerCase()) ||
@@ -287,23 +288,41 @@ Vue.component("news-page", {
 
       const number = parseInt(string, 10);
       Object.keys(this.months).forEach((monthAbbrivation, index) => {
-        if (number === (index + 1)) match = this.months[monthAbbrivation];
+        index++;
+        if (number === index) match = this.months[monthAbbrivation];
       });
 
       return match;
     },
 
     correctMonthSpelling(string) {
-      Object.keys(this.monthsInDanish).forEach(monthAbbrivation => {
-        if (
-          string.toLowerCase().includes(monthAbbrivation) ||
-          this.monthsInDanish[monthAbbrivation].toLowerCase().includes(string)
-        ) {
-          return this.monthsInDanish[monthAbbrivation];
-        } else {
-          return string;
+      let match = string;
+
+      if (isNaN(string)) {
+        Object.keys(this.monthsInDanish).forEach((monthAbbrivation) => {
+          if (
+            string.toLowerCase().includes(monthAbbrivation) ||
+            this.monthsInDanish[monthAbbrivation]
+              .toString()
+              .toLowerCase()
+              .includes(string)
+          ) {
+            match = this.monthsInDanish[monthAbbrivation];
+          }
+        });
+        return match;
+      }
+
+      const number = parseInt(string, 10);
+      Object.keys(this.monthsInDanish).forEach((monthAbbrivation, index) => {
+        index++;
+        console.log(index)
+        if (number === index) {
+          match = this.monthsInDanish[monthAbbrivation];
         }
       });
+
+      return match;
     },
 
     /**
@@ -394,11 +413,7 @@ Vue.component("news-page", {
             if (!value) {
               value = this.fallbackMonth;
             } else {
-              value = this.translateToEnglishMonth(value);
-              console.log(value)
-              // value = this.correctMonthSpelling(
-              //   this.translateToEnglishMonth(value)
-              // );
+              value = this.correctMonthSpelling(value);
             }
           }
 
@@ -417,16 +432,15 @@ Vue.component("news-page", {
 
         const articleDay = newsArticle[this.columns["day"]];
         const articleMonth = newsArticle[this.columns["month"]];
+        const articleMonthInEnglish = this.translateToEnglishMonth(
+          newsArticle[this.columns["month"]]
+        );
         const articleYear = newsArticle[this.columns["year"]];
         const author = newsArticle[this.columns["author"]];
 
         newsArticle.publishedDate = new Date(
-          `${articleMonth} ${articleDay}, ${articleYear} 00:00:00`
+          `${articleMonthInEnglish} ${articleDay}, ${articleYear} 00:00:00`
         );
-
-        // console.log(newsArticle.publishedDate);
-        // console.log(articleDay, articleMonth, articleYear);
-
         if (this.isDateTheSame(newsArticle.publishedDate, this.todaysDate)) {
           this.newsFromTodayCount++;
           newsArticle.dateText = this.constants.newsFromTodayText;

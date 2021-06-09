@@ -68,13 +68,11 @@ Vue.component("news-page", {
         mar: "Marts",
         apr: "April",
         maj: "Maj",
-        may: "Maj",
         jun: "Juni",
         jul: "Juli",
         aug: "August",
         sept: "September",
         okt: "Oktober",
-        oct: "Oktober",
         nov: "November",
         dec: "December"
       },
@@ -134,6 +132,10 @@ Vue.component("news-page", {
         _this2.washNewsData(); // TODO: Find another way to sort data, maybe computed property
         // Check find store application for the shop-sorting
 
+
+        _this2.state.newsData.sort(function (a, b) {
+          return b.publishedDate - a.publishedDate;
+        });
       });
     },
     queryTableElement: function queryTableElement(_ref) {
@@ -246,20 +248,35 @@ Vue.component("news-page", {
 
       var number = parseInt(string, 10);
       Object.keys(this.months).forEach(function (monthAbbrivation, index) {
-        if (number === index + 1) match = _this4.months[monthAbbrivation];
+        index++;
+        if (number === index) match = _this4.months[monthAbbrivation];
       });
       return match;
     },
     correctMonthSpelling: function correctMonthSpelling(string) {
       var _this5 = this;
 
-      Object.keys(this.monthsInDanish).forEach(function (monthAbbrivation) {
-        if (string.toLowerCase().includes(monthAbbrivation) || _this5.monthsInDanish[monthAbbrivation].toLowerCase().includes(string)) {
-          return _this5.monthsInDanish[monthAbbrivation];
-        } else {
-          return string;
+      var match = string;
+
+      if (isNaN(string)) {
+        Object.keys(this.monthsInDanish).forEach(function (monthAbbrivation) {
+          if (string.toLowerCase().includes(monthAbbrivation) || _this5.monthsInDanish[monthAbbrivation].toString().toLowerCase().includes(string)) {
+            match = _this5.monthsInDanish[monthAbbrivation];
+          }
+        });
+        return match;
+      }
+
+      var number = parseInt(string, 10);
+      Object.keys(this.monthsInDanish).forEach(function (monthAbbrivation, index) {
+        index++;
+        console.log(index);
+
+        if (number === index) {
+          match = _this5.monthsInDanish[monthAbbrivation];
         }
       });
+      return match;
     },
 
     /**
@@ -342,10 +359,7 @@ Vue.component("news-page", {
             if (!value) {
               value = _this6.fallbackMonth;
             } else {
-              value = _this6.translateToEnglishMonth(value);
-              console.log(value); // value = this.correctMonthSpelling(
-              //   this.translateToEnglishMonth(value)
-              // );
+              value = _this6.correctMonthSpelling(value);
             }
           }
 
@@ -363,10 +377,12 @@ Vue.component("news-page", {
         });
         var articleDay = newsArticle[_this6.columns["day"]];
         var articleMonth = newsArticle[_this6.columns["month"]];
+
+        var articleMonthInEnglish = _this6.translateToEnglishMonth(newsArticle[_this6.columns["month"]]);
+
         var articleYear = newsArticle[_this6.columns["year"]];
         var author = newsArticle[_this6.columns["author"]];
-        newsArticle.publishedDate = new Date("".concat(articleMonth, " ").concat(articleDay, ", ").concat(articleYear, " 00:00:00")); // console.log(newsArticle.publishedDate);
-        // console.log(articleDay, articleMonth, articleYear);
+        newsArticle.publishedDate = new Date("".concat(articleMonthInEnglish, " ").concat(articleDay, ", ").concat(articleYear, " 00:00:00"));
 
         if (_this6.isDateTheSame(newsArticle.publishedDate, _this6.todaysDate)) {
           _this6.newsFromTodayCount++;
