@@ -44,6 +44,10 @@ Vue.component("news-page", {
       },
       fieldsToBeGenerated: ["icon", "dateText", "tag", "publishedDate"],
       tableId: ".humany-notify-table",
+      fallbackDay: "1",
+      fallbackMonth: "January",
+      fallbackYear: "2050",
+      fallbackAuthor: "Redaktøren",
       months: {
         jan: "january",
         feb: "february",
@@ -58,6 +62,7 @@ Vue.component("news-page", {
         nov: "november",
         dec: "december",
       },
+      
       monthsInDanish: {
         jan: "Januar",
         feb: "Februar",
@@ -74,6 +79,7 @@ Vue.component("news-page", {
         nov: "November",
         dec: "December",
       },
+
       newsTagOptions: {
         isSU: [
           "SU",
@@ -106,6 +112,7 @@ Vue.component("news-page", {
         BOQ_TAG: "BUSINESS QUALITY AND OPTIMIZATION", // Sets this as tag if article is made by BOQ
         VIP_TAG: "VIP", // Sets this as tag if article is made by VIP TEAM
       },
+
       constants: {
         newsFromTodayText: "Nyhed fra i dag",
         pebble:
@@ -118,6 +125,11 @@ Vue.component("news-page", {
 
   created() {
     this.guides.forEach((guide) => this.getGuideBodyContent(guide));
+    setTimeout(() => {
+      this.state.newsData.sort(function (a, b) {
+        return b.publishedDate - a.publishedDate;
+      });
+    }, 2000);
   },
 
   mounted() {
@@ -129,7 +141,9 @@ Vue.component("news-page", {
     // });
   },
 
-  computed: {},
+  computed: {
+    sorter() {},
+  },
 
   methods: {
     getGuideBodyContent(guideId) {
@@ -150,9 +164,6 @@ Vue.component("news-page", {
 
           // TODO: Find another way to sort data, maybe computed property
           // Check find store application for the shop-sorting
-          this.state.newsData.sort(function (a, b) {
-            return b.publishedDate - a.publishedDate;
-          });
         });
     },
 
@@ -195,7 +206,6 @@ Vue.component("news-page", {
 
       // GET THE INNER HTML FROM THE HEADER ROWS
       for (let i = 0; i < table.rows[0].cells.length; i++) {
-        //headers[i] = table.rows[0].cells[i].innerHTML.toLowerCase().replace(/ /gi, '');
         headers[i] = table.rows[0].cells[i].id.toLowerCase().replace(/ /gi, "");
       }
 
@@ -256,29 +266,43 @@ Vue.component("news-page", {
     },
 
     translateToEnglishMonth(string) {
+      let match = this.fallbackMonth;
+
       if (isNaN(string)) {
-        Object.keys(this.months).forEach((monthAbbrivation) => {
+        Object.keys(this.months).forEach(monthAbbrivation => {
           if (
-            string.toLowerCase().includes(monthAbbrivation) ||
-            string.toLowerCase().includes(this.months[monthAbbrivation])
+            // if the large string includes one of the abbr.
+            string.toLowerCase().includes(monthAbbrivation.toLowerCase()) ||
+            // if the keys (not abbrivation) but rather full months like "january" includes string..
+            this.months[monthAbbrivation]
+              .toString()
+              .toLowerCase()
+              .includes(string.toLowerCase())
           ) {
-            return this.months[monthAbbrivation];
+            match = this.months[monthAbbrivation];
           }
         });
+        return match;
       }
 
       const number = parseInt(string, 10);
-      Object.keys(this.months).forEach((key, index) => {
-        if (number === index + 1) return this.months[key];
+      Object.keys(this.months).forEach((monthAbbrivation, index) => {
+        if (number === (index + 1)) match = this.months[monthAbbrivation];
       });
 
-      return string;
+      return match;
     },
 
     correctMonthSpelling(string) {
-      Object.keys(this.monthsInDanish).forEach((monthAbbrivation) => {
-        if (string.toLowerCase().includes(monthAbbrivation))
+      Object.keys(this.monthsInDanish).forEach(monthAbbrivation => {
+        if (
+          string.toLowerCase().includes(monthAbbrivation) ||
+          this.monthsInDanish[monthAbbrivation].toLowerCase().includes(string)
+        ) {
           return this.monthsInDanish[monthAbbrivation];
+        } else {
+          return string;
+        }
       });
     },
 
@@ -336,7 +360,7 @@ Vue.component("news-page", {
     /**
      *
      * @name getTodaysDate
-     * @returns a Date object with todays date
+     * @returns a Date object with todays date in Danish writing
      */
     getTodaysDate() {
       const date = new Date();
@@ -363,27 +387,29 @@ Vue.component("news-page", {
           // To keep the app from crashing if day or month or year does not exist,
           // set a default value
           if (!value && columnKey === this.columns["day"]) {
-            const fallbackDay = "1";
-            value = fallbackDay;
+            value = this.fallbackDay;
           }
 
           if (columnKey === this.columns["month"]) {
             if (!value) {
-              const fallbackMonth = "January";
-              value = fallbackMonth;
-            } else value = this.translateToEnglishMonth(value);
+              value = this.fallbackMonth;
+            } else {
+              value = this.translateToEnglishMonth(value);
+              console.log(value)
+              // value = this.correctMonthSpelling(
+              //   this.translateToEnglishMonth(value)
+              // );
+            }
           }
 
           if (columnKey === this.columns["year"]) {
             if (!value) {
-              const fallbackYear = "2050";
-              value = fallbackYear;
+              value = this.fallbackYear;
             }
           }
 
           if (!value && columnKey === this.columns["author"]) {
-            const fallbackAuthor = "Redaktøren";
-            value = fallbackAuthor;
+            value = this.fallbackAuthor;
           }
 
           newsArticle[columnKey] = value;
@@ -395,8 +421,11 @@ Vue.component("news-page", {
         const author = newsArticle[this.columns["author"]];
 
         newsArticle.publishedDate = new Date(
-          `${articleMonth}, ${articleDay}, ${articleYear} 00:00:00`
+          `${articleMonth} ${articleDay}, ${articleYear} 00:00:00`
         );
+
+        // console.log(newsArticle.publishedDate);
+        // console.log(articleDay, articleMonth, articleYear);
 
         if (this.isDateTheSame(newsArticle.publishedDate, this.todaysDate)) {
           this.newsFromTodayCount++;
